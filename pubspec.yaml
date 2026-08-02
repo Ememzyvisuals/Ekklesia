@@ -1,0 +1,86 @@
+name: ekklesia
+description: "Ekklesia — streaming, Bible study, and AI-assisted discipleship for DCLM and Christians everywhere."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Navigation
+  go_router: ^14.2.0
+
+  # Firebase
+  firebase_core: ^3.3.0
+  firebase_auth: ^5.1.2
+  cloud_firestore: ^5.2.0
+  firebase_messaging: ^15.0.3
+  # cloud_functions removed — nothing in this client calls a Firebase
+  # callable anymore. Groq and YouTube sync both moved to Cloudflare
+  # Workers (cloudflare/groq-proxy/, cloudflare/youtube-sync/)
+  # specifically to avoid requiring the Firebase Blaze plan. See
+  # PHASE2_NOTES.md.
+
+  # Local storage
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  shared_preferences: ^2.2.3
+
+  # Media
+  just_audio: ^0.9.40
+  just_audio_background: ^0.0.1-beta.13
+  youtube_player_flutter: ^9.0.3
+
+  # Networking
+  http: ^1.2.2
+  dio: ^5.5.0+1
+
+  # Utilities
+  flutter_svg: ^2.0.10+1 # renders assets/avatars/*.svg (default illustrated avatars)
+  url_launcher: ^6.3.1 # Games: external launch path for entries without embed permission
+  webview_flutter: ^4.10.0 # Games: in-app embed path for entries with embed permission
+  cached_network_image: ^3.4.1 # video/game thumbnails
+  cupertino_icons: ^1.0.8
+  path_provider: ^2.1.4
+  intl: ^0.19.0
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  flutter_dotenv: ^5.1.0
+  google_fonts: ^6.2.1
+  connectivity_plus: ^6.0.5
+  crypto: ^3.0.3 # sha256 checksum verification for completed downloads (DownloadWorker)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.11
+  riverpod_generator: ^2.4.0
+  isar_generator: ^3.1.0+1
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - .env
+    - assets/images/
+    - assets/icons/
+    - assets/audio/
+    - assets/avatars/
+    - assets/bible/manifest.json
+    - assets/bible/en.json
+    - assets/bible/yo.json
+    - assets/bible/ha.json
+    - assets/bible/ig.json
+    - assets/bible/pcm.json

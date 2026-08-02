@@ -1,0 +1,59 @@
+name: Dependency Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Verify pubspec.lock is in sync with pubspec.yaml
+        run: |
+          flutter pub get
+          if ! git diff --exit-code pubspec.lock; then
+            echo "::error::pubspec.lock is out of sync with pubspec.yaml — commit the regenerated lockfile."
+            exit 1
+          fi
+
+      - name: Check for dependency conflicts
+        run: flutter pub deps --style=compact > pubspec-deps-report.txt
+
+      - name: Check for outdated packages
+        run: flutter pub outdated --json > pubspec-outdated-report.json || true
+
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report
+          path: |
+            pubspec-deps-report.txt
+            pubspec-outdated-report.json
+
+  functions-dependencies:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install (verifies package-lock.json is in sync)
+        run: npm ci
+
+      - name: npm audit (report only — doesn't fail the build on advisories)
+        run: npm audit --audit-level=high || echo "::warning::npm audit found advisories — review the log above."

@@ -1,0 +1,193 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: Generate Isar schema code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate localization code
+        run: flutter gen-l10n
+
+      # This is what actually closes the "no android/ directory" gap —
+      # `flutter create .` only fills in missing platform folders, it
+      # does not touch lib/ or any existing config, so it's safe to run
+      # against an existing project. This is fundamentally different from
+      # hand-writing android/ios by hand (which this project's docs
+      # explicitly decided against — see FINAL_AUDIT_REPORT.md): this
+      # step runs on a real GitHub Actions runner with a real Flutter SDK
+      # (installed by subosito/flutter-action above), so the generated
+      # project is guaranteed correct for whatever Flutter version the
+      # runner has — not a hand-guessed, untestable copy.
+      - name: Generate platform folders
+        run: flutter create . --platforms=android,ios --org com.ememzyvisuals --project-name ekklesia
+
+      # This app calls bare Firebase.initializeApp() (no firebase_options.dart
+      # import in main.dart — see FIREBASE_SETUP.md), so it relies entirely
+      # on this native config file being present. Must run AFTER `flutter
+      # create .` above — android/app/ doesn't exist before that. Without
+      # this secret set, the build still succeeds (the Google Services
+      # Gradle plugin isn't even applied in a freshly `flutter create .`'d
+      # project, so nothing here enforces the file's presence at build
+      # time) but the resulting APK will fail at Firebase.initializeApp()
+      # on a real device — it needs a real Firebase project's config,
+      # not something CI can fabricate.
+      - name: Write google-services.json
+        if: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > android/app/google-services.json
+
+      # Wires up real release signing from repository secrets, instead of
+      # silently falling back to the debug keystore `flutter create`
+      # ships by default (which builds fine but isn't installable-as-an-
+      # update over a Play Store release, and Play Console will reject an
+      # AAB signed with the debug key anyway). Skips cleanly if the
+      # secrets aren't configured yet — the build still succeeds
+      # debug-signed, it just isn't store-submittable until secrets exist.
+      - name: Configure Android release signing
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=release-keystore.jks
+          EOF
+          # `flutter create`'s generated build.gradle only has a debug
+          # signingConfig wired to the release buildType — patch in a
+          # real release signingConfig that reads the key.properties
+          # above, following the standard Flutter release-signing setup.
+          python3 - <<'PYEOF'
+          import re, os
+          path = "android/app/build.gradle"
+          if not os.path.exists(path) and os.path.exists(path + ".kts"):
+              path = path + ".kts"
+          src = open(path).read()
+          if "keystoreProperties" not in src:
+              inject = '''
+          def keystorePropertiesFile = rootProject.file("key.properties")
+          def keystoreProperties = new Properties()
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+          }
+          '''
+              src = src.replace("android {", inject + "\nandroid {", 1)
+              release_signing = '''
+              signingConfigs {
+                  release {
+                      if (keystorePropertiesFile.exists()) {
+                          keyAlias keystoreProperties['keyAlias']
+                          keyPassword keystoreProperties['keyPassword']
+                          storeFile file(keystoreProperties['storeFile'])
+                          storePassword keystoreProperties['storePassword']
+                      }
+                  }
+              }
+          '''
+              src = re.sub(r"buildTypes \{", release_signing + "\n    buildTypes {", src, count=1)
+              src = src.replace(
+                  "signingConfig signingConfigs.debug",
+                  "signingConfig signingConfigs.release",
+              )
+              open(path, "w").write(src)
+              print(f"Patched {path} with release signing config.")
+          else:
+              print(f"{path} already references keystoreProperties — skipping patch.")
+          PYEOF
+
+      # Writing google-services.json alone doesn't do anything — the
+      # Google Services Gradle plugin has to actually be applied to read
+      # it. `flutterfire configure` normally does this step automatically
+      # (along with generating firebase_options.dart); since this
+      # workflow uses plain `flutter create .` instead, that plugin
+      # registration is done by hand here. This is the single riskiest
+      # patch in this workflow — Gradle plugin syntax has changed across
+      # Android Gradle Plugin versions (legacy `apply plugin:` vs the
+      # newer `plugins {}` DSL) and this only handles the common cases.
+      # If a Firebase feature silently doesn't initialize after a real
+      # release build, check here first, and consider running
+      # `flutterfire configure` locally once and committing the resulting
+      # native project changes instead of relying on this patch.
+      - name: Apply Google Services Gradle plugin
+        if: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
+        run: |
+          python3 - <<'PYEOF'
+          import os
+
+          root_path = "android/build.gradle"
+          if not os.path.exists(root_path) and os.path.exists(root_path + ".kts"):
+              root_path = root_path + ".kts"
+          root_src = open(root_path).read()
+          if "google-services" not in root_src:
+              root_src = root_src.replace(
+                  "dependencies {",
+                  "dependencies {\n        classpath 'com.google.gms:google-services:4.4.2'",
+                  1,
+              )
+              open(root_path, "w").write(root_src)
+              print(f"Added google-services classpath to {root_path}.")
+          else:
+              print(f"{root_path} already references google-services — skipping.")
+
+          app_path = "android/app/build.gradle"
+          if not os.path.exists(app_path) and os.path.exists(app_path + ".kts"):
+              app_path = app_path + ".kts"
+          app_src = open(app_path).read()
+          plugin_line = (
+              'apply(plugin = "com.google.gms.google-services")'
+              if app_path.endswith(".kts")
+              else "apply plugin: 'com.google.gms.google-services'"
+          )
+          if "google-services" not in app_src:
+              open(app_path, "a").write(f"\n{plugin_line}\n")
+              print(f"Applied google-services plugin in {app_path}.")
+          else:
+              print(f"{app_path} already applies google-services — skipping.")
+          PYEOF
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Build App Bundle (for Play Store)
+        run: flutter build appbundle --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+
+  create-release:
+    needs: build-android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-release
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/flutter-apk/app-release.apk
+            dist/bundle/release/app-release.aab
+          generate_release_notes: true
+          draft: true

@@ -1,0 +1,121 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ---- Per-user data ----
+    // users/{uid}: profile + fcm_token (written by NotificationService.
+    // _saveTokenToUser). Owner-only read/write; fcm_token specifically
+    // should really only ever be set by the client that owns it.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid);
+    }
+
+    // ai_conversations/{uid}_{sessionId}_{messageId} per
+    // ConversationMessage's doc id scheme (see conversation.dart /
+    // conversation_repository.dart) — owner-only, uid is validated
+    // against the stored field, not just the doc path prefix, so a
+    // crafted id can't spoof another user's uid field.
+    match /ai_conversations/{docId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // bookmarks/{uid}_{type}_{refId} per BookmarkItem.deterministicId —
+    // owner-only, same uid-field validation pattern as ai_conversations.
+    match /bookmarks/{docId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // notifications/{id}: written by NotificationService (client, for
+    // foreground-received messages) and by the notifications.ts Cloud
+    // Function fan-out (Admin SDK — bypasses rules entirely, so no rule
+    // is needed to allow that path). Clients may only touch their own.
+    match /notifications/{id} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      // markAsRead only ever flips `read` — still scoped to the owner.
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow delete: if false; // pruning is server-side only (cleanup.ts)
+    }
+
+    // ---- Global, read-only-to-clients content ----
+    // Written by Cloud Functions (Admin SDK, bypasses rules) on their
+    // schedules. Client generation paths in VerseWorker/PrayerWorker/
+    // ProgramWorker are documented as a fallback for when the Cloud
+    // Function hasn't run yet, so authenticated clients need create
+    // (not update) access for that one-time backfill — never overwrite
+    // of an existing scheduled doc.
+    match /daily_verse/{date} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    match /daily_prayer/{date} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    match /programs/{ruleId} {
+      allow read: if isSignedIn();
+      allow write: if false; // schedule rules are curated server-side/admin, not client-writable
+    }
+
+    match /youtube_videos/{videoId} {
+      allow read: if isSignedIn();
+      allow write: if false; // youtubeSyncSchedule (Cloud Function) only
+    }
+
+    match /config/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /feature_flags/{flagId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---- Operational logs — server-write, no client access at all ----
+    // (worker_logs/sync_logs/download_logs are written by client workers
+    // today per app_config.dart's constants — see PHASE2_NOTES.md for the
+    // "should these move server-side too" note. Until that migration,
+    // signed-in clients need create access to their own log entries.)
+    match /worker_logs/{id} {
+      allow read: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    match /sync_logs/{id} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /download_logs/{id} {
+      allow read: if false;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

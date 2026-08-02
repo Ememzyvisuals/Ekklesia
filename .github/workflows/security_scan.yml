@@ -1,0 +1,78 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly sweep, independent of pushes — catches newly-disclosed CVEs
+    # in dependencies that haven't changed, not just new code.
+    - cron: "0 3 * * 1"
+
+jobs:
+  flutter-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      # `flutter pub outdated --mode=null-safety` doesn't do CVE scanning
+      # (pub.dev/Dart has no first-party advisory database equivalent to
+      # `npm audit` at time of writing) — this step is honest about that
+      # rather than pretending to. `dependency_check.yml` covers the
+      # lockfile-sync side; this is the closest real equivalent available.
+      - name: Report dependency versions for manual review
+        run: flutter pub outdated --json > flutter-dependency-versions.json || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flutter-dependency-versions
+          path: flutter-dependency-versions.json
+
+  functions-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci
+      - name: npm audit (fails the build on high/critical)
+        run: npm audit --audit-level=high
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Real regression guard for the specific keys this project actually
+      # uses (Groq, YouTube Data API, Firebase web config) — not a generic
+      # "detect all secrets" scanner. A .env file committed by mistake, or
+      # a key pasted directly into a .dart file, both get caught below.
+      - name: Fail if a real .env is committed
+        run: |
+          if git ls-files | grep -qE "(^|/)\.env$"; then
+            echo "::error::A .env file is tracked in git — it should only ever be .env.example. Remove it and add .env to .gitignore."
+            exit 1
+          fi
+
+      - name: Scan for inline secrets in tracked source
+        run: |
+          if grep -rnE "(gsk_|AIza)[A-Za-z0-9_-]{20,}" \
+              --include="*.dart" --include="*.ts" --include="*.json" . \
+              | grep -v "node_modules"; then
+            echo "::error::Found what looks like a live Groq (gsk_...) or Google (AIza...) key committed in source above."
+            exit 1
+          fi

@@ -1,0 +1,70 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      # Required before analyze/test can even parse the codebase: Isar's
+      # @collection classes (lib/features/bible/data/*_schema.dart) each
+      # have a `part '*.g.dart';` directive pointing at a generated file
+      # that doesn't exist until this runs, and every AppLocalizations.of()
+      # call resolves against lib/l10n/generated/app_localizations.dart,
+      # also generated. Without these two steps, analyze/test fail on
+      # "target of URI doesn't exist" before ever reaching real issues —
+      # this isn't optional CI polish, it's why this workflow would not
+      # have passed before this step was added.
+      - name: Generate Isar schema code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Generate localization code
+        run: flutter gen-l10n
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: warn
+
+      - name: Upload test summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-summary
+          path: |
+            coverage/lcov.info
+          if-no-files-found: ignore

@@ -1,0 +1,26 @@
+{
+  "name": "ekklesia-functions",
+  "description": "EKKLESIA Cloud Functions — scheduled content generation, YouTube sync, Groq proxy, and FCM notification triggers. Phase 2 of the build roadmap (see PHASE2_NOTES.md).",
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions,firestore",
+    "shell": "npm run build && firebase functions:shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.3.1",
+    "firebase-functions": "^5.0.1",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.11",
+    "typescript": "^5.5.4"
+  },
+  "private": true
+}

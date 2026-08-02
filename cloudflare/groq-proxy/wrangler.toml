@@ -1,0 +1,14 @@
+name = "ekklesia-groq-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Not a secret — Firebase project IDs are public (they're in every
+# client's google-services.json / GoogleService-Info.plist already).
+# Replace with your actual Firebase project ID.
+FIREBASE_PROJECT_ID = "your-firebase-project-id"
+
+# GROQ_API_KEY is NOT set here — secrets never go in wrangler.toml
+# (it's meant to be committed). Set it with:
+#   wrangler secret put GROQ_API_KEY
