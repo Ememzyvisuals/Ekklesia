@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Caps how many AI chat calls a person can make per day through the
-/// app's *shared* Groq key (via the `groqChat` Cloud Function) before
+/// app's *shared* Groq key (via the `groqChat` Cloudflare Worker endpoint) before
 /// asking them to add their own free key from console.groq.com. Groq's
 /// free tier has real per-day request limits on the shared account — this
 /// protects that shared quota from being exhausted by a small number of

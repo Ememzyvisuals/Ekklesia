@@ -14,7 +14,7 @@ import 'verse_worker.dart';
 /// same job server-side; this client path is the fallback if that
 /// scheduled run is ever missed, same relationship VerseWorker has with
 /// dailyVerseSchedule). GroqService itself no longer holds the Groq API
-/// key — calls go through the `groqChat` Cloud Function callable, so this
+/// key — calls go through the `groqChat` Cloudflare Worker endpoint, so this
 /// path doesn't reintroduce the key-exposure issue that used to apply here.
 class PrayerWorker {
   PrayerWorker._internal();

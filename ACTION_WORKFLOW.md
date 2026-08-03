@@ -85,8 +85,10 @@ end-to-end against your real backend.
 **If Bible import fails**: check that `assets/bible/*.json` are actually
 bundled (pubspec `assets:` section, already configured — but confirm
 the files exist on disk at that path).
-**If AI chat fails**: check `firebase functions:log` for the `groqChat`
-invocation — most likely cause is a missing/misnamed Secret Manager key.
+**If AI chat fails**: check `wrangler tail` on the `groq-proxy` Worker
+(not `firebase functions:log` — Groq no longer runs through a Cloud
+Function) — most likely cause is a missing/misnamed `GROQ_API_KEY`
+Worker secret (`wrangler secret put GROQ_API_KEY`).
 
 ---
 

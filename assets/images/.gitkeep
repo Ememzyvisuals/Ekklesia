@@ -1,0 +1,1 @@
+This directory is intentionally tracked with a placeholder — git doesn't track empty directories, and pubspec.yaml declares this path as a bundled asset directory. Delete this file once real assets are added; an empty declared asset directory is valid for Flutter's asset bundler, it just needs SOME tracked file inside it to exist in git at all.

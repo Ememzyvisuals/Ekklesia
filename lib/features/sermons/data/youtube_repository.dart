@@ -61,13 +61,16 @@ class YoutubeRepository {
   /// (`YoutubeRemoteDatasource`, deleted), then went through a Firebase
   /// Cloud Function callable (`syncYoutubeNow`), and now goes through this
   /// Cloudflare Worker instead — moved specifically to avoid requiring
-  /// the Firebase Blaze plan for this, the last remaining reason this app
-  /// needed it after the Groq proxy moved off Firebase too. See
-  /// `cloudflare/youtube-sync/README.md` for the full reasoning — that
-  /// Worker still writes to Firestore with real admin-level credentials
-  /// (a Google Service Account), so `firestore.rules`' server-only write
-  /// rule on `youtube_videos`/`config` stays intact; this migration
-  /// didn't relax that.
+  /// the Firebase Blaze plan for this piece. Daily verse/prayer/cleanup
+  /// and all push-notification fan-out needed the same treatment before
+  /// Blaze was actually fully avoidable app-wide — see
+  /// `cloudflare/daily-content/README.md` and `PHASE2_NOTES.md` for that
+  /// part. See `cloudflare/youtube-sync/README.md` for the full
+  /// reasoning on this Worker specifically — it still writes to
+  /// Firestore with real admin-level credentials (a Google Service
+  /// Account), so `firestore.rules`' server-only write rule on
+  /// `youtube_videos`/`config` stays intact; this migration didn't
+  /// relax that.
   Future<Result<void>> refresh() async {
     try {
       final idToken = await AuthService.instance.getIdToken();

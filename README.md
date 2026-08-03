@@ -13,10 +13,20 @@ with Flutter + Firebase, brand EMEMZYVISUALS DIGITALS.
 
 - **Client**: Flutter, Riverpod, GoRouter, Isar (offline storage), just_audio.
 - **Backend**: Firebase (Auth, Firestore, Storage, Cloud Messaging,
-  Analytics, Crashlytics) + Cloud Functions (TypeScript) as the gateway to
-  external APIs — Groq and YouTube Data API v3. The client never holds
-  either API key; both live in Secret Manager and are called through
-  Cloud Function callables (`groqChat`, `groqModels`, `syncYoutubeNow`).
+  Analytics, Crashlytics) on the free Spark plan, plus three Cloudflare
+  Workers (TypeScript, `cloudflare/`) doing everything that would
+  otherwise need Cloud Functions — Groq proxying, YouTube sync, and daily
+  verse/prayer generation + cleanup + all push-notification fan-out.
+  Client-facing API keys never touch the app; Groq/YouTube keys live in
+  each Worker's secret store and are called over plain HTTPS with a
+  Firebase ID token for auth (`groqProxyBaseUrl`,
+  `youtubeSyncProxyBaseUrl` in `app_config.dart`). Moved off the
+  equivalent Firebase Cloud Functions (`groqChat`, `groqModels`,
+  `syncYoutubeNow`, `dailyVerseSchedule`, `dailyPrayerSchedule`,
+  `cleanupSchedule`, and three Firestore-triggered notification
+  functions) specifically to avoid requiring the Blaze plan — see
+  `PHASE2_NOTES.md`. As of this pass, `functions/` genuinely never
+  needs to be deployed; it's kept in the repo only as a rollback option.
 - **AI**: Groq (chat, sermon summaries, quiz generation).
 - **TTS**: HuggingFace Space (WazobiaVoice) for Bible chapter read-aloud,
   with generated audio cached to local disk so a chapter never regenerates
@@ -36,8 +46,12 @@ lib/
     search/        Federated search across Bible/sermons/bookmarks/downloads/AI/settings
     notifications/ In-app notification center
     settings/, profile/, onboarding/, auth/, home/, learn/, games/
-functions/src/     Cloud Functions: daily verse/prayer schedules, YouTube sync,
-                   Groq proxy, cleanup, notifications
+functions/src/     Cloud Functions source — fully superseded by
+                   cloudflare/ (see below), kept as an optional rollback
+                   path, not deployed or called by the client
+cloudflare/        groq-proxy/, youtube-sync/, daily-content/ Workers —
+                   fully supersede functions/; nothing calls functions/
+                   anymore (kept as an optional rollback path)
 assets/bible/      Bundled per-language Bible datasets (en/yo/ha/ig/pcm JSON + manifest)
 tools/             build_bible.py — regenerates assets/bible/*.json from raw sources
 ```
@@ -72,14 +86,18 @@ tools/             build_bible.py — regenerates assets/bible/*.json from raw s
 - Home (live verse/prayer/program cards), Bible (offline, all 5
   languages — reading, search, highlights, notes, bookmarks, continue
   reading, chapter listen with local audio caching), AI Assistant (Groq
-  chat via Cloud Function, persisted conversations), Downloads,
+  chat via Cloudflare Worker, persisted conversations), Downloads,
   Notifications, Bookmarks, federated Search, Settings, Radio (DCLM
-  stream), Sermons (YouTube-synced).
+  stream), Sermons (YouTube-synced via Cloudflare Worker).
 - 9 background-style workers wired: Sync, Youtube, Program, Verse,
   Prayer, Notification, Conversation, Cleanup, Download.
-- Cloud Functions: daily verse/prayer schedules, YouTube sync schedule +
-  on-demand callable, Groq chat/model-list callables, cleanup, notification
-  fan-out.
+- Cloudflare Workers (3, all free-tier, no Blaze anywhere): Groq
+  chat/model-list proxy; YouTube sync (on-demand `/syncNow` + its own
+  15-min Cron Trigger, plus live-status push notifications folded in);
+  daily verse/prayer generation + cleanup (3 Cron Triggers) with push
+  notifications folded into the same write. `functions/` (Cloud
+  Functions) is fully superseded and optional — kept only as a rollback
+  path, see PHASE2_NOTES.md.
 - Localization: 5 languages (en/yo/ha/ig/pcm), wired into 6+ screens.
 - CI: 6 GitHub Actions workflows (analyze, test, dependency check,
   security scan, release).
@@ -96,17 +114,22 @@ tools/             build_bible.py — regenerates assets/bible/*.json from raw s
   tracked and shown inline, but there's no dedicated stats page), no
   chunked prefetch-while-playing TTS streaming queue (chapters generate
   audio up front, then cache it — see `BIBLE_IMPORT_NOTES.md`).
-- `YoutubeWorker`/`YoutubeRepository` and Groq have been migrated off
-  client-side API keys onto Cloud Function callables, but **neither has
-  been tested against a real deployed Firebase project** — there's no live
-  project in this sandbox to verify against.
+- All three Cloudflare Workers (Groq proxy, YouTube sync, daily-content)
+  have been migrated off Cloud Functions, but **none have been tested
+  against a real deployed Worker/Firebase project** — there's no live
+  deployment in this sandbox to verify against. The hand-rolled
+  service-account OAuth2 flow (no `firebase-admin` on Workers) shared by
+  `youtube-sync` and `daily-content` is the riskiest untested piece —
+  see those Workers' README.md files.
 
 ## Docs index
 
 - `SYSTEM_ARCHITECTURE.md` — layering, data flow, the two-storage-system split.
 - `DATABASE_SCHEMA.md` — Isar collections + Firestore collections.
-- `API_REFERENCE.md` — the 3 Cloud Function callables the client calls.
-- `CLOUD_FUNCTIONS.md` — full backend function inventory.
+- `API_REFERENCE.md` — the three Cloudflare Worker endpoints (Groq,
+  YouTube sync, daily content) that replaced every Cloud Function
+  callable the client used to call.
+- `CLOUD_FUNCTIONS.md` — full backend function inventory (all superseded).
 - `WORKERS.md` — client-side workers, and which spec-named Bible workers
   were folded into existing classes instead of built separately.
 - `OFFLINE_ENGINE.md` — what's actually offline-first (Bible) vs. not.

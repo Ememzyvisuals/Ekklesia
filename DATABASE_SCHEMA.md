@@ -31,11 +31,11 @@ authoritative list; this table is a summary, not a substitute.
 
 | Collection | Written by | Read by |
 |---|---|---|
-| `daily_verse` / `daily_prayer` (one doc per `yyyy-MM-dd`) | `dailyVerseSchedule`/`dailyPrayerSchedule` (Cloud Functions), with `VerseWorker`/`PrayerWorker` as a client-side fallback if the doc is missing | Home screen |
-| `youtube_videos` | `youtubeSyncSchedule` / `syncYoutubeNow` (Cloud Functions) | Sermons screen, Search |
+| `daily_verse` / `daily_prayer` (one doc per `yyyy-MM-dd`) | `cloudflare/daily-content/` Worker (Cron Triggers, superseded `dailyVerseSchedule`/`dailyPrayerSchedule`), with `VerseWorker`/`PrayerWorker` as a client-side fallback if the doc is missing | Home screen |
+| `youtube_videos` | `cloudflare/youtube-sync/` Worker (Cron Trigger + `/syncNow`), via a Google Service Account — not a Cloud Function anymore | Sermons screen, Search |
 | `config/youtube_live_status` | same as above | Home screen (live banner) |
 | `users/{uid}` | AuthService on signup | Profile/Settings |
-| Bookmarks, AI conversations, notifications, download logs, worker logs, sync logs | client + Cloud Functions (fan-out triggers) | respective feature screens |
+| Bookmarks, AI conversations, notifications, download logs, worker logs, sync logs | client + Cloudflare Workers (`daily-content`, `youtube-sync` — superseded the Cloud Functions fan-out triggers) | respective feature screens |
 
 Firestore security rules are in `firestore.rules`; composite indexes in
 `firestore.indexes.json`. Deploy both together — see `FIREBASE_SETUP.md`.

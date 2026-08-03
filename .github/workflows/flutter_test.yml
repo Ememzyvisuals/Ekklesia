@@ -19,6 +19,16 @@ jobs:
 
       - run: flutter pub get
 
+      # This is the step that actually hard-failed before this fix —
+      # `flutter test` builds the asset bundle before running any test,
+      # and pubspec.yaml declares `.env` as a bundled asset. .env is
+      # correctly gitignored (real secrets never get committed);
+      # .env.example is committed and is all the asset bundler needs to
+      # find *something* at that path. See flutter_analyze.yml's
+      # identical step for the full reasoning.
+      - name: Create .env from .env.example for CI
+        run: cp .env.example .env
+
       # See flutter_ci.yml's identical step for why this is required —
       # test/features/bible/*_test.dart import types from generated files
       # (Isar schemas, and transitively AppLocalizations elsewhere in the

@@ -8,6 +8,14 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    # Secrets can't be referenced directly in an `if:` conditional (job or
+    # step level) — GitHub's parser rejects the whole workflow file with
+    # "Unrecognized named-value: 'secrets'" if you try, which is a
+    # parse-time failure, not a runtime one (the job never even starts).
+    # Documented: https://docs.github.com/actions/security-guides/using-secrets-in-github-actions
+    # Fix is exactly what those docs recommend — promote the check to a
+    # job-level env var (secrets ARE allowed in job-level env:), then
+    # reference the env var in each step's `if:` instead.
     env:
       HAS_GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
       HAS_ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
@@ -19,19 +27,55 @@ jobs:
           cache: true
       - run: flutter pub get
 
+      # .env only declares HF_TOKEN client-side now (Groq/YouTube keys
+      # live in their Cloudflare Workers' own secret stores, not here —
+      # see .env.example) — .env.example's blank placeholder is genuinely
+      # sufficient for a real release build, not just CI. See
+      # flutter_analyze.yml's identical step for the full reasoning on
+      # why this file has to exist at all despite being gitignored.
+      - name: Create .env from .env.example
+        run: cp .env.example .env
+
       - name: Generate Isar schema code
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Generate localization code
         run: flutter gen-l10n
 
+      # This is what actually closes the "no android/ directory" gap —
+      # `flutter create .` only fills in missing platform folders, it
+      # does not touch lib/ or any existing config, so it's safe to run
+      # against an existing project. This is fundamentally different from
+      # hand-writing android/ios by hand (which this project's docs
+      # explicitly decided against — see FINAL_AUDIT_REPORT.md): this
+      # step runs on a real GitHub Actions runner with a real Flutter SDK
+      # (installed by subosito/flutter-action above), so the generated
+      # project is guaranteed correct for whatever Flutter version the
+      # runner has — not a hand-guessed, untestable copy.
       - name: Generate platform folders
         run: flutter create . --platforms=android,ios --org com.ememzyvisuals --project-name ekklesia
 
+      # This app calls bare Firebase.initializeApp() (no firebase_options.dart
+      # import in main.dart — see FIREBASE_SETUP.md), so it relies entirely
+      # on this native config file being present. Must run AFTER `flutter
+      # create .` above — android/app/ doesn't exist before that. Without
+      # this secret set, the build still succeeds (the Google Services
+      # Gradle plugin isn't even applied in a freshly `flutter create .`'d
+      # project, so nothing here enforces the file's presence at build
+      # time) but the resulting APK will fail at Firebase.initializeApp()
+      # on a real device — it needs a real Firebase project's config,
+      # not something CI can fabricate.
       - name: Write google-services.json
         if: env.HAS_GOOGLE_SERVICES == 'true'
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > android/app/google-services.json
 
+      # Wires up real release signing from repository secrets, instead of
+      # silently falling back to the debug keystore `flutter create`
+      # ships by default (which builds fine but isn't installable-as-an-
+      # update over a Play Store release, and Play Console will reject an
+      # AAB signed with the debug key anyway). Skips cleanly if the
+      # secrets aren't configured yet — the build still succeeds
+      # debug-signed, it just isn't store-submittable until secrets exist.
       - name: Configure Android release signing
         if: env.HAS_ANDROID_KEYSTORE == 'true'
         run: |
@@ -42,6 +86,10 @@ jobs:
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           storeFile=release-keystore.jks
           EOF
+          # `flutter create`'s generated build.gradle only has a debug
+          # signingConfig wired to the release buildType — patch in a
+          # real release signingConfig that reads the key.properties
+          # above, following the standard Flutter release-signing setup.
           python3 - <<'PYEOF'
           import re, os
           path = "android/app/build.gradle"
@@ -80,6 +128,19 @@ jobs:
               print(f"{path} already references keystoreProperties — skipping patch.")
           PYEOF
 
+      # Writing google-services.json alone doesn't do anything — the
+      # Google Services Gradle plugin has to actually be applied to read
+      # it. `flutterfire configure` normally does this step automatically
+      # (along with generating firebase_options.dart); since this
+      # workflow uses plain `flutter create .` instead, that plugin
+      # registration is done by hand here. This is the single riskiest
+      # patch in this workflow — Gradle plugin syntax has changed across
+      # Android Gradle Plugin versions (legacy `apply plugin:` vs the
+      # newer `plugins {}` DSL) and this only handles the common cases.
+      # If a Firebase feature silently doesn't initialize after a real
+      # release build, check here first, and consider running
+      # `flutterfire configure` locally once and committing the resulting
+      # native project changes instead of relying on this patch.
       - name: Apply Google Services Gradle plugin
         if: env.HAS_GOOGLE_SERVICES == 'true'
         run: |

@@ -43,13 +43,15 @@ Follow `FIREBASE_SETUP.md` in full first. Then:
 | Continue Reading | Open a chapter, go back to book list | A "Continue Reading" card appears pointing at that chapter |
 | Reading streak | Open any chapter | Streak banner appears/increments (only once per calendar day) |
 | Bible audio | Tap Listen on a chapter | Audio plays; tapping Listen again on the *same* chapter plays near-instantly (cache hit) — check via a stopwatch, first play should be noticeably slower than the second |
-| AI chat | Sign in, send a message in AI Assistant | A real Groq-generated reply appears — this exercises `groqChat` end-to-end |
-| Sermons refresh | Pull to refresh on Sermons screen | New/updated videos appear if DCLM has uploaded since the last `youtubeSyncSchedule` run — exercises `syncYoutubeNow` |
+| AI chat | Sign in, send a message in AI Assistant | A real Groq-generated reply appears — this exercises the `groq-proxy` Cloudflare Worker end-to-end |
+| Sermons refresh | Pull to refresh on Sermons screen | New/updated videos appear if DCLM has uploaded since the `youtube-sync` Worker's Cron Trigger last ran — the pull-to-refresh itself exercises its `/syncNow` endpoint |
 | Localization | Switch app language in Settings, revisit Bible screen | Every string on screen changes language, including the ones added this pass (import prompt, search hint, streak text, etc.) |
 
 ## Known-unverified items (flag these explicitly if you find issues)
 
 - Whether the app compiles at all (see step 3 above).
-- Whether `groqChat`/`groqModels`/`syncYoutubeNow` actually work against
-  a live deployed project — code is internally consistent but untested.
+- Whether the `groq-proxy`/`youtube-sync` Cloudflare Workers actually
+  work against a live deployment and a real Firebase project — code is
+  internally consistent but untested. The YouTube Worker's hand-rolled
+  service-account OAuth2 flow is the riskiest piece.
 - Whether the 6 GitHub Actions workflows actually pass.

@@ -1,0 +1,22 @@
+name = "ekklesia-daily-content"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+# UTC times equivalent to 00:05 / 00:10 / 00:35 Africa/Lagos (WAT = UTC+1
+# year-round, no DST, so this never needs adjusting for a DST change the
+# way a US/EU equivalent would). Workers Free plan allows up to 3 Cron
+# Triggers per Worker — exactly what this needs; a 4th schedule would
+# require either the Paid plan or splitting into two Workers. See
+# README.md for the verified-current number.
+crons = ["5 23 * * *", "10 23 * * *", "35 23 * * *"]
+
+[vars]
+# Not a secret — Firebase project IDs are public (already in every
+# client's google-services.json). Replace with your real project ID.
+FIREBASE_PROJECT_ID = "your-firebase-project-id"
+
+# These ARE secrets — never put them here. Set with:
+#   wrangler secret put GROQ_API_KEY
+#   wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON

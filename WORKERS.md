@@ -8,10 +8,10 @@ noted.
 | Worker | Runs | Does |
 |---|---|---|
 | `SyncWorker` | App launch | General Firestore sync bootstrap. |
-| `YoutubeWorker` | App launch | Calls `YoutubeRepository.refresh()` → `syncYoutubeNow` Cloud Function (migrated off direct API calls this pass). |
+| `YoutubeWorker` | App launch | Calls `YoutubeRepository.refresh()` → `youtube-sync` Cloudflare Worker's `/syncNow` (migrated off direct API calls, then off the `syncYoutubeNow` Cloud Function). |
 | `ProgramWorker` | App launch / Home screen | Determines current live/upcoming/recent program for the Home card. |
 | `VerseWorker` | App launch | Ensures today's verse doc exists — reads from the offline `BibleRepository` for English text (see its own doc comment), falls back gracefully if that language isn't imported yet on-device. |
-| `PrayerWorker` | App launch, after VerseWorker | Generates today's prayer from the verse via `GroqService` (now Cloud-Function-backed). |
+| `PrayerWorker` | App launch, after VerseWorker | Generates today's prayer from the verse via `GroqService` (now backed by the `groq-proxy` Cloudflare Worker). |
 | `NotificationWorker` | App launch | Local notification scheduling/registration. |
 | `ConversationWorker` | AI screen | Conversation history sync/cache. |
 | `CleanupWorker` | App launch | Housekeeping: prunes old log/notification docs, orphaned temp download files, **and** (added this pass) reconciles the Bible chapter-audio cache — see its own doc comment for why that's folded in here instead of a separate `BibleCleanupWorker` class. |

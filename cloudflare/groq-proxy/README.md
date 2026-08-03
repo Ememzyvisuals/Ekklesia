@@ -19,15 +19,14 @@ user base stays well under 100k/day in aggregate.
 
 ## What this does NOT change
 
-- **YouTube sync (`syncYoutubeNow`/`youtubeSyncSchedule`) is still on
-  Firebase Cloud Functions** — this migration was scoped to Groq
-  specifically. If avoiding Blaze entirely (not just for Groq) matters,
-  that one would need the same treatment — it's a very similar shape
-  (Cloudflare Cron Triggers for the schedule, a Worker endpoint for the
-  on-demand callable) but wasn't done here since it wasn't asked for.
-  Note this means **Blaze may still be required** for this app overall
-  unless YouTube sync is migrated too, or moved client-side again with
-  its own key-exposure tradeoff, or dropped.
+- **Update, later pass**: YouTube sync, daily verse/prayer, cleanup, and
+  all push-notification fan-out have since been migrated too — see
+  `cloudflare/youtube-sync/README.md` and
+  `cloudflare/daily-content/README.md`. At the time this Worker was
+  built, all of those were still on Firebase Cloud Functions, so avoiding
+  Blaze for the app overall wasn't guaranteed by this migration alone.
+  That's no longer the case — `functions/` is fully superseded and
+  optional now, kept only as a rollback path (see `PHASE2_NOTES.md`).
 - Firebase Auth, Firestore, and everything else about this app's backend
   is untouched — this Worker only replaces the two Groq-related
   callables (`groqChat`, `groqModels`).

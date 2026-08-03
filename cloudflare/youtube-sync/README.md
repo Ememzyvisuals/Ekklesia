@@ -1,8 +1,12 @@
 # YouTube Sync — Cloudflare Worker
 
-The second (and last) piece of avoiding Firebase Blaze entirely. Same job
-`functions/src/youtubeSync.ts` does — pull DCLM's uploads/live status from
-YouTube Data API v3, write to Firestore — running on Cloudflare Workers.
+One of three Workers closing out Blaze avoidance entirely (see
+`cloudflare/daily-content/README.md` for the other two — daily
+verse/prayer + cleanup). Same job `functions/src/youtubeSync.ts` does —
+pull DCLM's uploads/live status from YouTube Data API v3, write to
+Firestore — running on Cloudflare Workers, **plus** the live-status push
+notification that used to be `onLiveStatusChanged` (a Firestore trigger,
+folded in here — see `youtube.ts`'s `syncYoutube` and `fcm.ts`).
 
 ## Why this one is riskier than the Groq proxy
 
@@ -26,7 +30,14 @@ before trusting the sync jobs that depend on it.
 In Google Cloud Console (same project as your Firebase project):
 1. IAM & Admin → Service Accounts → Create Service Account.
 2. Grant it the **Cloud Datastore User** role (not project-wide Editor —
-   this is the minimum role that can read/write Firestore).
+   this is the minimum role that can read/write Firestore) **and**
+   **Firebase Cloud Messaging API Admin** — added in this pass so this
+   Worker can send the live-status push itself (`fcm.ts`) instead of
+   needing `onLiveStatusChanged`, a Firestore trigger Workers doesn't
+   have. If you deployed this Worker before this pass with only the
+   Datastore role, add the messaging role now or live notifications will
+   silently fail (logged, but never thrown — see `index.ts`'s
+   `notifyLiveTransition`).
 3. Create a JSON key for it, download it.
 
 ### 2. Set secrets
@@ -108,3 +119,8 @@ that `wrangler deploy` didn't error.
   convenient batch-write helper `firebase-admin`'s SDK does) — writes up
   to 25 video documents sequentially per sync. Fine at this scale
   (bounded by `maxResults=25`), would need revisiting if that ever grows.
+- The live-status push fan-out (`fcm.ts`) loops one FCM request per
+  device token and hits the Workers Free plan's 50-subrequest-per-
+  invocation cap at scale — same ceiling and same tradeoff options
+  documented in `cloudflare/daily-content/README.md`, since it's the
+  identical `fcm.ts` pattern reused here.

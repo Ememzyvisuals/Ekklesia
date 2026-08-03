@@ -7,15 +7,19 @@ below is real, type-checked TypeScript (`npx tsc --noEmit` passes clean,
 
 ## What's here
 
-| Function | Trigger | Does |
-|---|---|---|
-| `dailyVerseSchedule` | Cloud Scheduler, 00:05 Africa/Lagos daily | Picks today's reference, fetches English text from wldeh's CDN, writes `daily_verse/{yyyy-MM-dd}` |
-| `dailyPrayerSchedule` | Cloud Scheduler, 00:10 Africa/Lagos daily | Reads today's verse, asks Groq for a short prayer, writes `daily_prayer/{yyyy-MM-dd}` |
-| `youtubeSyncSchedule` | Cloud Scheduler, every 15 min | Mirrors `YoutubeRepository.refresh()` server-side — writes `youtube_videos/*` and `config/youtube_live_status` |
-| `groqChat` / `groqModels` | ~~Callable~~ **Superseded** — see below | These still exist in `functions/src/groqProxy.ts` but the client no longer calls them; moved to a Cloudflare Worker (`cloudflare/groq-proxy/`) this pass |
-| `onDailyVerseCreated` / `onDailyPrayerCreated` / `onLiveStatusChanged` | Firestore triggers | Fan out FCM pushes + write per-user `notifications` docs |
-| `cleanupSchedule` | Cloud Scheduler, every 24h | Prunes `notifications`/`worker_logs`/`sync_logs`/`download_logs` across **all** users (client-side `CleanupWorker` only ever prunes whoever's currently signed in on that device) |
-| `generateTodaysVerseNow` / `syncYoutubeNow` | Callable | Manual triggers for testing without waiting on the schedule |
+| Function | Trigger | Does | Status |
+|---|---|---|---|
+| `dailyVerseSchedule` | Cloud Scheduler, 00:05 Africa/Lagos daily | Picks today's reference, fetches English text from wldeh's CDN, writes `daily_verse/{yyyy-MM-dd}` | **Superseded** — `cloudflare/daily-content/`'s `5 23 * * *` Cron Trigger |
+| `dailyPrayerSchedule` | Cloud Scheduler, 00:10 Africa/Lagos daily | Reads today's verse, asks Groq for a short prayer, writes `daily_prayer/{yyyy-MM-dd}` | **Superseded** — `cloudflare/daily-content/`'s `10 23 * * *` Cron Trigger |
+| `youtubeSyncSchedule` | Cloud Scheduler, every 15 min | Mirrors `YoutubeRepository.refresh()` server-side — writes `youtube_videos/*` and `config/youtube_live_status` | **Superseded** — `cloudflare/youtube-sync/`'s own Cron Trigger |
+| `groqChat` / `groqModels` | Callable | Groq chat/model-list proxy | **Superseded** — `cloudflare/groq-proxy/` |
+| `onDailyVerseCreated` / `onDailyPrayerCreated` / `onLiveStatusChanged` | Firestore triggers | Fan out FCM pushes + write per-user `notifications` docs | **Superseded** — folded inline into `cloudflare/daily-content/` and `cloudflare/youtube-sync/` respectively (see below for why) |
+| `cleanupSchedule` | Cloud Scheduler, every 24h | Prunes `notifications`/`worker_logs`/`sync_logs`/`download_logs` across **all** users (client-side `CleanupWorker` only ever prunes whoever's currently signed in on that device) | **Superseded** — `cloudflare/daily-content/`'s `35 23 * * *` Cron Trigger |
+| `generateTodaysVerseNow` / `syncYoutubeNow` | Callable | Manual triggers for testing without waiting on the schedule | **Superseded** — `/verseNow`, `/syncNow` on the respective Workers |
+
+Every function in this table is superseded as of this pass — see
+"Where things actually stand now" below. `functions/` is kept in the
+repo, type-checked and buildable, purely as a rollback option.
 
 `src/config.ts` mirrors `app_config.dart`'s collection name constants by hand
 — there's no cross-language codegen in this repo, so if you rename a
@@ -69,40 +73,63 @@ account).
 from `pubspec.yaml`** — nothing in the Flutter client calls any Firebase
 callable anymore.
 
-## Important honesty check: this does NOT mean Blaze is avoidable yet
+## Daily verse/prayer/cleanup + all remaining notification fan-out — moved off Firebase too (this pass)
 
-Migrating Groq and YouTube sync closes the two things actually asked
-about, but **`functions/src/index.ts` still exports four other things
-that require Cloud Functions (and therefore Blaze) if deployed**:
+Closing the honesty gap this file used to flag right here: after Groq and
+YouTube sync, `dailyVerseSchedule`, `dailyPrayerSchedule`,
+`cleanupSchedule`, and the three Firestore-triggered notification
+functions (`onDailyVerseCreated`, `onDailyPrayerCreated`,
+`onLiveStatusChanged`) were still Blaze-only, since deploying
+`functions/` at all requires it regardless of which specific functions
+you actually use. All four are now covered:
 
-- `dailyVerseSchedule`, `dailyPrayerSchedule` — daily content generation
-- `cleanupSchedule` — server-side log pruning
-- `onDailyVerseCreated`/`onDailyPrayerCreated`/`onLiveStatusChanged` —
-  push notification fan-out (Firestore-triggered)
+- `dailyVerseSchedule` + `onDailyVerseCreated`,
+  `dailyPrayerSchedule` + `onDailyPrayerCreated`, and
+  `cleanupSchedule` → a new Worker, `cloudflare/daily-content/`, with
+  three Cron Triggers (Workers Free plan allows up to 3 per Worker —
+  exactly enough).
+- `onLiveStatusChanged` → folded into `cloudflare/youtube-sync/`'s
+  existing sync job, since it already writes the doc that trigger used
+  to react to (see that Worker's `youtube.ts`/`fcm.ts`, updated this
+  pass).
 
-If the goal is avoiding Blaze **completely**, the honest path is:
-**don't deploy `functions/` at all.** Here's what that actually costs,
-feature by feature:
+The Firestore-trigger functions specifically needed real research, not
+just a mechanical port — Workers has no equivalent of "react to a
+document being created." The fix that came out of checking FCM's HTTP
+v1 API docs: since the code writing a doc and the code that needs to
+notify about it already run in the same Worker invocation, there's no
+reason to route through a Firestore trigger at all — just send the push
+directly after the write succeeds, using the same service-account OAuth2
+pattern already built for Firestore access, with FCM's own messaging
+scope. See `cloudflare/daily-content/README.md`'s "Why this needed
+actual research" section for the full reasoning and what didn't work
+(a polling Worker was the first idea considered, and rejected — see that
+README for why).
 
-- Daily verse/prayer: fine — `VerseWorker`/`PrayerWorker` already
-  generate them client-side as a fallback if the Firestore doc is
-  missing (originally built as a same-session fallback for a missed
-  scheduled run, but works identically as the *only* source if the
-  schedule never runs at all).
-- Cleanup: fine — the client's `CleanupWorker` already does local/
-  per-user housekeeping independently.
-- **Push notifications for new verse/prayer/live status: lost, with no
-  equivalent built.** This is the one piece with no client-side
-  fallback, because by nature it needs something server-side reacting
-  to *any* user's data change to notify *other* users — a Cloudflare
-  Worker with a Cron Trigger could poll for changes instead of reacting
-  to a Firestore trigger directly, but that's a different architecture,
-  not built this pass since it wasn't asked for.
+## Where things actually stand now: Blaze genuinely is avoidable
+
+With all five pieces (Groq, YouTube sync, daily verse/prayer, cleanup,
+all notification fan-out) migrated, **`functions/` no longer needs to be
+deployed for anything the Flutter client uses.** `functions/src/*.ts` is
+left in place — type-checked, buildable, not deleted — in case you'd
+rather run the Cloud Functions versions instead, or roll back a Worker
+that misbehaves in production. But nothing in this repo requires you to
+deploy it anymore.
 
 Firebase itself (Auth, Firestore, Storage, Cloud Messaging, Analytics,
-Crashlytics) stays on the **free Spark plan** either way — none of those
-require Blaze or a payment method. Only Cloud Functions does. So "avoid
-Blaze" = "don't deploy `functions/`," not "don't use Firebase at all."
+Crashlytics) was always on the free Spark plan regardless — only Cloud
+Functions ever required Blaze. So the honest current statement is: **you
+never need to touch the Blaze plan for this app**, full stop, not just
+"you can defer it."
+
+**What's still genuinely unverified**, same caveat repeated in every
+Worker's own README: none of `cloudflare/groq-proxy/`,
+`cloudflare/youtube-sync/`, or `cloudflare/daily-content/` have been
+tested against a real deployed Cloudflare account, a real GCP service
+account, or a real Firebase project — there's no live infrastructure in
+this sandbox to verify against. Deploy and test each one's manual-trigger
+endpoint (`/groqChat`, `/syncNow`, `/verseNow` + `/prayerNow` +
+`/cleanupNow`) before trusting any of their cron schedules unattended.
 
 
 
@@ -134,7 +161,7 @@ secret shipped to every install.
   function is pinned to `us-central1` explicitly; change that if you
   provision the Firebase project in a different region.
 
-## Setup
+## Setup (optional — only needed if you choose to run `functions/` instead of/alongside the Workers)
 
 ```bash
 cd functions

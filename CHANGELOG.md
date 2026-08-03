@@ -8,6 +8,27 @@ real release build.
 
 ## Unreleased — this pass
 
+- **Blaze is now genuinely, fully avoidable — closing the honesty gap
+  from the previous entry below.** New Worker,
+  `cloudflare/daily-content/`, with 3 Cron Triggers (Workers Free plan
+  allows up to 3 per Worker), supersedes `dailyVerseSchedule`,
+  `dailyPrayerSchedule`, and `cleanupSchedule`. The two Firestore-
+  triggered notification functions this couldn't mechanically port
+  (`onDailyVerseCreated`, `onDailyPrayerCreated` — Workers has no
+  Firestore-trigger equivalent) are folded inline instead: the same
+  Worker call that writes today's verse/prayer doc also sends the push,
+  right after, using FCM's HTTP v1 API with the same service-account
+  OAuth2 pattern already built for Firestore access (different scope).
+  `onLiveStatusChanged` got the same treatment, folded into
+  `cloudflare/youtube-sync/`'s existing sync job (see that Worker's
+  updated `youtube.ts`/new `fcm.ts`) instead of a fourth Worker.
+  `functions/` is fully superseded now — kept in the repo only as a
+  manual rollback option, not required for anything. See
+  `cloudflare/daily-content/README.md` for the research that went into
+  this (why a polling approach was considered and rejected in favor of
+  inlining the notification into the write) and every Worker's own
+  honest-caveats section for what's still unverified.
+
 - **YouTube sync also moved off Firebase** — `cloudflare/youtube-sync/`
   now handles both the on-demand refresh (`/syncNow` endpoint) and the
   15-minute schedule (Cloudflare Cron Trigger), replacing
@@ -17,13 +38,13 @@ real release build.
   Workers) — flagged as the highest-risk untested piece of this project.
   `cloud_functions` removed from `pubspec.yaml` — nothing in the client
   calls a Firebase callable anymore.
-- **Honesty note added**: migrating Groq + YouTube sync does NOT mean
-  Firebase Blaze is fully avoidable — `dailyVerseSchedule`,
-  `dailyPrayerSchedule`, `cleanupSchedule`, and the notification
-  fan-out triggers still need it if `functions/` is deployed. Documented
-  exactly what breaks (push notifications) vs. what doesn't (verse/
-  prayer/cleanup, which have client-side fallbacks) if it's skipped
-  entirely.
+- ~~**Honesty note added**: migrating Groq + YouTube sync does NOT mean
+  Firebase Blaze is fully avoidable~~ — **closed above, this same pass**:
+  `dailyVerseSchedule`, `dailyPrayerSchedule`, `cleanupSchedule`, and the
+  notification fan-out triggers are now migrated too. Left this entry
+  struck through rather than deleted so the "was this actually true at
+  the time" history stays legible — same reasoning `PHASE2_NOTES.md`
+  uses for keeping superseded sections rather than rewriting history.
 
 - **Groq moved off Firebase entirely.** `groqChat`/`groqModels` are no
   longer called by the client — `GroqService`/`AIConfig` now call a
@@ -33,7 +54,6 @@ real release build.
   no card required). Firebase ID token verification happens in the
   Worker itself (against Google's public JWKS), since a plain Worker
   doesn't get `request.auth` for free the way a Firebase callable does.
-  YouTube sync is unaffected — still Firebase Cloud Functions.
 - **iOS-style animations app-wide, not just Bible.** Set
   `CupertinoPageTransitionsBuilder` in the shared theme — every screen
   in the app now gets the iOS push/pop slide instead of Android's

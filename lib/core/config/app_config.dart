@@ -125,9 +125,12 @@ class AppConfig {
   // AIConfig both read this constant; nothing else needs updating.
 
   // YouTube sync — same reasoning as groqProxyBaseUrl above, moved off
-  // Firebase Cloud Functions to fully avoid needing the Blaze plan (this
-  // was the one remaining Blaze dependency after the Groq migration —
-  // see cloudflare/youtube-sync/README.md).
+  // Firebase Cloud Functions specifically to avoid requiring the Blaze
+  // plan for this piece — see cloudflare/youtube-sync/README.md. Daily
+  // verse/prayer/cleanup + all push-notification fan-out needed the same
+  // treatment too (cloudflare/daily-content/, no client-facing base URL
+  // here since the client never calls that Worker directly) before
+  // Blaze was actually fully avoidable app-wide — see PHASE2_NOTES.md.
   static const String youtubeSyncProxyBaseUrl = 'https://ekklesia-youtube-sync.YOUR-SUBDOMAIN.workers.dev';
   // ^ Placeholder — replace after your first `wrangler deploy` there.
   // YoutubeRepository.refresh() reads this constant.
@@ -193,10 +196,13 @@ class AppConfig {
   static const String youtubeChannelHandle = '@DCLMHQ';
 
   // The client no longer calls the YouTube Data API directly —
-  // YoutubeRepository.refresh() calls the `syncYoutubeNow` Cloud Function
-  // callable (functions/src/youtubeSync.ts), which holds YOUTUBE_API_KEY
-  // in Secret Manager instead of the app bundle. That file also documents
-  // the uploads-playlist-id-from-channel-id resolution (via
+  // YoutubeRepository.refresh() calls the `youtube-sync` Cloudflare
+  // Worker's `/syncNow` endpoint (cloudflare/youtube-sync/, base URL is
+  // youtubeSyncProxyBaseUrl above), which holds YOUTUBE_API_KEY in its
+  // own secret store instead of Secret Manager or the app bundle.
+  // Superseded the `syncYoutubeNow` Cloud Function callable this pass —
+  // see PHASE2_NOTES.md. The Worker's source also documents the
+  // uploads-playlist-id-from-channel-id resolution (via
   // channels.list?part=contentDetails, not the hardcoded "UC"->"UU" swap
   // trick) — same reasoning as when this lived client-side.
 

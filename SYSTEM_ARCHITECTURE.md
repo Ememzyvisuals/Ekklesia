@@ -26,15 +26,20 @@ Widget (ConsumerWidget/ConsumerStatefulWidget)
     → Repository (data/)
       → Isar (offline-first: Bible, and only Bible so far)
       → Firestore (everything else: verse/prayer docs, YouTube cache, bookmarks, etc.)
-      → Cloud Functions callable (Groq, YouTube sync-on-demand — never the raw external API)
+      → Cloudflare Worker (Groq, YouTube sync-on-demand — never the raw external API)
 ```
 
 The client **never** calls Groq or the YouTube Data API directly anymore —
-both went through a security migration this pass (see `PHASE2_NOTES.md`)
-onto Cloud Function callables (`groqChat`, `groqModels`, `syncYoutubeNow`).
-Scheduled Cloud Functions (`dailyVerseSchedule`, `dailyPrayerSchedule`,
-`youtubeSyncSchedule`, `cleanupSchedule`) write the same Firestore
-collections the client reads, independent of whether the app is open.
+both went through a security migration (see `PHASE2_NOTES.md`), first onto
+Cloud Function callables (`groqChat`, `groqModels`, `syncYoutubeNow`), then
+off Firebase entirely onto three Cloudflare Workers (`cloudflare/groq-proxy/`,
+`cloudflare/youtube-sync/`, `cloudflare/daily-content/`) to avoid requiring
+the Blaze plan. Each Worker verifies the caller's Firebase ID token itself
+(against Google's public JWKS) since it doesn't get `request.auth` for
+free the way a callable does. `dailyVerseSchedule`/`dailyPrayerSchedule`/
+`cleanupSchedule` are superseded by `daily-content`'s three Cron Triggers,
+and `youtubeSyncSchedule` by the YouTube Worker's own Cron Trigger —
+`functions/` is fully optional now, kept only as a rollback path.
 
 ## Storage: two systems, not one
 

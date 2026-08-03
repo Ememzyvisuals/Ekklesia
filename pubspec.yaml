@@ -51,6 +51,15 @@ dependencies:
   cached_network_image: ^3.4.1 # video/game thumbnails
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.4
+  # Deliberately unpinned — flutter_localizations (Flutter SDK) requires
+  # an exact intl version that changes with each Flutter release
+  # (currently 0.20.2). Pinning this to a caret range (e.g. ^0.19.0)
+  # creates a version-solving conflict the moment the SDK's requirement
+  # moves past that range — exactly what broke CI here. `intl: any` lets
+  # pub resolve to whatever the SDK actually ships. Only basic
+  # DateFormat(...) calls in this codebase (bookmarks_screen.dart,
+  # notifications_screen.dart, video_player_screen.dart) — stable across
+  # 0.19->0.20, so this is safe.
   intl: any
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
@@ -65,6 +74,14 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   build_runner: ^2.4.11
   riverpod_generator: ^2.4.0
+  # Pinned below 2.5.3 deliberately — freezed >=2.5.3 requires either
+  # source_gen ^2.0.0 or analyzer ^6.5.0, but isar_generator ^3.1.0+1
+  # (still on source_gen ^1.2.2 / analyzer >=4.6.0 <6.0.0 — hasn't been
+  # updated for the newer analyzer major) can't satisfy either. This
+  # exact downgrade is what pub's own solver suggested when it hit the
+  # conflict ("Consider downgrading your constraint on freezed:
+  # flutter pub add dev:freezed:^2.5.2"). If isar_generator ever ships an
+  # update supporting analyzer 6.x/source_gen 2.x, this pin can come off.
   isar_generator: ^3.1.0+1
   freezed: ^2.5.2
   json_serializable: ^6.8.0

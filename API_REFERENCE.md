@@ -1,14 +1,13 @@
 # API Reference
 
 The Flutter client no longer calls any Firebase Cloud Function callable
-directly — as of this pass, both external-API proxies moved to
-Cloudflare Workers, specifically to avoid requiring the Firebase Blaze
-plan. See `PHASE2_NOTES.md` for the full reasoning and an honest note on
-what this does and doesn't mean for whether Blaze is fully avoidable
-(short version: these two things, yes; four other Cloud Functions still
-need it if you deploy them).
+directly — as of this pass, everything that used to require Cloud
+Functions moved to three Cloudflare Workers, specifically to avoid
+requiring the Firebase Blaze plan. See `PHASE2_NOTES.md` for the full
+reasoning — Blaze is now genuinely, fully avoidable; `functions/` is
+kept in the repo only as an optional rollback path.
 
-Both Workers use the same auth model: a Firebase ID token sent as
+All three Workers use the same auth model: a Firebase ID token sent as
 `Authorization: Bearer <token>`, verified by the Worker itself against
 Google's public JWKS (a plain Worker doesn't get `request.auth` for free
 the way a Firebase callable does).
@@ -66,20 +65,39 @@ This Worker also runs on a Cloudflare Cron Trigger every 15 minutes
 Firestore itself (via a real Google Service Account — see
 `cloudflare/youtube-sync/README.md`), since `firestore.rules` blocks
 client writes to `youtube_videos`/`config` by design and this migration
-didn't relax that.
+didn't relax that. It also detects the not-live -> live transition
+inline and sends a push notification at that point — replacing
+`onLiveStatusChanged` (a Firestore trigger, which has no Workers
+equivalent — see `youtube.ts`).
 
-## Firebase Cloud Functions — still exist, not called by the client
+## Cloudflare Worker — daily content (`cloudflare/daily-content/`)
 
-`functions/src/groqProxy.ts` (`groqChat`, `groqModels`) and
-`functions/src/youtubeSync.ts` (`youtubeSyncSchedule`, `syncYoutubeNow`)
-are left in the codebase, unexported changes — in case you'd rather run
-those instead of the Cloudflare Workers, or roll back. Nothing in the
-Flutter client calls them as of this pass.
+**Not called by the Flutter client at all** — this Worker is purely
+server-side, driven by its own three Cron Triggers. Its `fetch()` routes
+exist only for manual testing (curl + a real Firebase ID token, same
+pattern as the other two Workers):
 
-`dailyVerse.ts`, `dailyPrayer.ts`, `cleanup.ts`, and `notifications.ts`
-are unrelated to this migration and still require Cloud Functions
-(Blaze) if deployed — see `PHASE2_NOTES.md`'s honesty note for what
-each one costs if you choose not to deploy `functions/` at all.
+| Endpoint | Cron equivalent | Replaces |
+|---|---|---|
+| `POST {dailyContentBaseUrl}/verseNow` | `5 23 * * *` (00:05 Africa/Lagos) | `dailyVerseSchedule` + `onDailyVerseCreated` |
+| `POST {dailyContentBaseUrl}/prayerNow` | `10 23 * * *` (00:10 Africa/Lagos) | `dailyPrayerSchedule` + `onDailyPrayerCreated` |
+| `POST {dailyContentBaseUrl}/cleanupNow` | `35 23 * * *` (00:35 Africa/Lagos) | `cleanupSchedule` |
+
+Each of the verse/prayer jobs sends its push notification inline, right
+after writing the Firestore doc, using FCM's HTTP v1 API — see
+`cloudflare/daily-content/README.md`'s "why this needed actual research"
+section for why that replaces the Firestore-triggered notification
+functions better than a mechanical port would have.
+
+## Firebase Cloud Functions — fully superseded, kept only as a rollback path
+
+Every function in `functions/src/` — `groqProxy.ts`, `youtubeSync.ts`,
+`dailyVerse.ts`, `dailyPrayer.ts`, `cleanup.ts`, `notifications.ts` — is
+superseded by the three Cloudflare Workers above as of this pass. The
+source is left in the codebase, unexported/unused, in case you'd rather
+run any of it instead, or roll back a misbehaving Worker. Nothing in the
+Flutter client calls any of it. See `PHASE2_NOTES.md` for the full
+migration history.
 
 ## Error handling convention
 

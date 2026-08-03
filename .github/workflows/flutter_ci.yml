@@ -29,6 +29,12 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
+      # See flutter_analyze.yml's identical step for the full reasoning —
+      # .env is correctly gitignored, .env.example is committed and is
+      # all this workflow needs to exist at that path.
+      - name: Create .env from .env.example for CI
+        run: cp .env.example .env
+
       # Required before analyze/test can even parse the codebase: Isar's
       # @collection classes (lib/features/bible/data/*_schema.dart) each
       # have a `part '*.g.dart';` directive pointing at a generated file

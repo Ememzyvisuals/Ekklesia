@@ -13,9 +13,11 @@ feeding back into this file.
 3. Enable **Firestore** (production mode — rules are in `firestore.rules`,
    don't leave it in test mode).
 4. Enable **Storage**, **Cloud Messaging**, **Analytics**, **Crashlytics**.
-5. Upgrade to the **Blaze (pay-as-you-go)** plan — Cloud Functions and
-   Cloud Scheduler both require it, even if you stay within the free
-   tier's usage limits.
+5. **Blaze is optional, not required.** Cloud Functions and Cloud
+   Scheduler need it, but every Cloud Function in `functions/` has been
+   superseded by a Cloudflare Worker (`cloudflare/`) — see step 6 below
+   and `PHASE2_NOTES.md`. Skip this entirely unless you specifically want
+   to run `functions/` as a rollback path instead of the Workers.
 
 ## 2. Connect the Flutter app
 
@@ -76,24 +78,42 @@ This deploys everything in `functions/src/index.ts`'s exports:
 
 | Function | Type | Purpose |
 |---|---|---|
-| `dailyVerseSchedule` | Scheduled | Picks + stores today's verse |
-| `dailyPrayerSchedule` | Scheduled | Generates today's prayer from the verse via Groq |
-| `youtubeSyncSchedule` | Scheduled (15 min) | Pulls YouTube uploads/live status into Firestore |
-| `syncYoutubeNow` | Callable | Manual trigger — `YoutubeRepository.refresh()` calls this |
-| `groqChat` | Callable | Chat proxy — `GroqService.chat()` calls this |
-| `groqModels` | Callable | Live model list — `AIConfig.verify()` calls this |
-| `cleanupSchedule` | Scheduled | Server-side log/notification pruning (client also has `CleanupWorker` for local housekeeping) |
-| notification triggers | Firestore-triggered | Fan out push notifications on relevant writes |
+| `dailyVerseSchedule` | Scheduled | **Superseded** — `cloudflare/daily-content/`'s `5 23 * * *` Cron Trigger does this now |
+| `dailyPrayerSchedule` | Scheduled | **Superseded** — `cloudflare/daily-content/`'s `10 23 * * *` Cron Trigger does this now |
+| `youtubeSyncSchedule` | Scheduled (15 min) | **Superseded** — `cloudflare/youtube-sync/`'s own Cron Trigger does this now |
+| `syncYoutubeNow` | Callable | **Superseded** — `YoutubeRepository.refresh()` calls the `youtube-sync` Worker's `/syncNow` instead |
+| `groqChat` | Callable | **Superseded** — `GroqService.chat()` calls the `groq-proxy` Worker instead |
+| `groqModels` | Callable | **Superseded** — `AIConfig.verify()` calls the `groq-proxy` Worker's `/groqModels` instead |
+| `cleanupSchedule` | Scheduled | **Superseded** — `cloudflare/daily-content/`'s `35 23 * * *` Cron Trigger does this now |
+| `onDailyVerseCreated` / `onDailyPrayerCreated` | Firestore-triggered | **Superseded** — folded inline into `cloudflare/daily-content/`'s verse/prayer jobs, right after each write |
+| `onLiveStatusChanged` | Firestore-triggered | **Superseded** — folded inline into `cloudflare/youtube-sync/`'s sync job |
+| `generateTodaysVerseNow` | Callable | **Superseded** — `/verseNow` on the `daily-content` Worker |
+
+Every function above is superseded — deploying `functions/` isn't
+required for anything the client uses anymore. It's kept only as a
+manual rollback option (e.g. if a Worker misbehaves in production and
+you want a known-working fallback while you debug it). See
+`PHASE2_NOTES.md` for the full migration history and honest caveats on
+what's untested.
 
 ## 7. Verify
 
-- `firebase functions:log` — tail logs after a deploy to confirm each
-  scheduled function actually fires on its first scheduled run.
+- `firebase functions:log` — only relevant if you chose to deploy
+  `functions/` as a rollback path; the Workers below are what actually
+  runs by default.
 - Sign in from the app, open the AI Assistant, send a message — this
-  exercises `groqChat` end-to-end. If it fails, check
-  `firebase functions:log` for the specific error (missing secret,
-  malformed request, etc.) before assuming the client code is wrong.
-- Open Sermons and pull-to-refresh — exercises `syncYoutubeNow`.
+  exercises the `groq-proxy` Cloudflare Worker end-to-end (not
+  `groqChat` anymore). If it fails, check `wrangler tail` for the
+  specific error (missing secret, malformed request, etc.) before
+  assuming the client code is wrong.
+- Open Sermons and pull-to-refresh — exercises the `youtube-sync`
+  Worker's `/syncNow` (not `syncYoutubeNow` anymore).
+- `cloudflare/daily-content/` has no in-app screen to trigger it from
+  (it's a scheduled/server-only job) — verify it via its `/verseNow`,
+  `/prayerNow`, `/cleanupNow` endpoints directly (curl + a real Firebase
+  ID token, same pattern as `youtube-sync`'s README), then check
+  Firestore's `daily_verse`/`daily_prayer` collections and your own
+  device's notifications for the resulting push.
 
 ## Emulators (local testing before deploying)
 

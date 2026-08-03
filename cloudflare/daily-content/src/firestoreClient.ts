@@ -1,16 +1,10 @@
 /**
- * Lets a Cloudflare Worker write to Firestore with admin-level access —
- * the same thing `firebase-admin` gives Cloud Functions for free, but a
- * Worker has no Node runtime and can't use that SDK. This is the
- * highest-risk, least-conventional piece of this migration: hand-rolling
- * a Google Service Account's OAuth2 JWT-Bearer flow using only the Web
- * Crypto API, then calling Firestore's plain REST API instead of a
- * typed SDK. The pattern itself is standard and documented (Google's own
- * docs describe exactly this flow for non-Node environments) — what's
- * unverified is this specific implementation, since there's no way to
- * run it against a real service account from this sandbox. Test this
- * file first and carefully before trusting the sync jobs that depend on
- * it — see cloudflare/youtube-sync/README.md.
+ * Same hand-rolled Service Account OAuth2 + Firestore REST pattern as
+ * cloudflare/youtube-sync/src/firestoreClient.ts (see that file's header
+ * comment for the full reasoning and honesty note on this being the
+ * least-conventional piece of these migrations). This copy adds
+ * `queryOlderThan` + `batchDelete`, needed for `cleanup.ts` but not by
+ * the YouTube Worker.
  */
 
 export interface ServiceAccountKey {
@@ -18,6 +12,8 @@ export interface ServiceAccountKey {
   private_key: string;
   project_id: string;
 }
+
+const DATASTORE_SCOPE = 'https://www.googleapis.com/auth/datastore';
 
 function base64UrlEncode(input: ArrayBuffer | string): string {
   const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : new Uint8Array(input);
@@ -37,29 +33,22 @@ function pemToArrayBuffer(pem: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-let cachedTokens: Record<string, { token: string; expiresAt: number }> = {};
+let cachedToken: { token: string; expiresAt: number } | null = null;
 
-async function getAccessToken(serviceAccount: ServiceAccountKey, scope: string): Promise<string> {
+async function getAccessToken(serviceAccount: ServiceAccountKey): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  // Reused across invocations within the same Worker isolate — avoids
-  // signing a new JWT and round-tripping to Google on every single call
-  // when several sync operations happen close together. Keyed by scope
-  // since this Worker now requests two different scopes (Firestore +,
-  // once notifyLiveTransition is wired up, FCM) that need separate tokens.
-  const cached = cachedTokens[scope];
-  if (cached && cached.expiresAt > now + 60) {
-    return cached.token;
+  if (cachedToken && cachedToken.expiresAt > now + 60) {
+    return cachedToken.token;
   }
 
   const header = { alg: 'RS256', typ: 'JWT' };
   const claims = {
     iss: serviceAccount.client_email,
-    scope,
+    scope: DATASTORE_SCOPE,
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600,
     iat: now,
   };
-
   const unsigned = `${base64UrlEncode(JSON.stringify(header))}.${base64UrlEncode(JSON.stringify(claims))}`;
 
   const key = await crypto.subtle.importKey(
@@ -69,7 +58,6 @@ async function getAccessToken(serviceAccount: ServiceAccountKey, scope: string):
     false,
     ['sign'],
   );
-
   const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
   const jwt = `${unsigned}.${base64UrlEncode(signature)}`;
 
@@ -81,17 +69,14 @@ async function getAccessToken(serviceAccount: ServiceAccountKey, scope: string):
       assertion: jwt,
     }),
   });
-
   if (!resp.ok) {
     throw new Error(`Failed to get a Google access token: ${resp.status} ${await resp.text()}`);
   }
-
   const data = (await resp.json()) as { access_token: string; expires_in: number };
-  cachedTokens[scope] = { token: data.access_token, expiresAt: now + data.expires_in };
+  cachedToken = { token: data.access_token, expiresAt: now + data.expires_in };
   return data.access_token;
 }
 
-/** Converts a plain JS value into Firestore REST API's typed "Value" wire format. */
 function toFirestoreValue(value: unknown): Record<string, unknown> {
   if (value === null || value === undefined) return { nullValue: null };
   if (typeof value === 'string') return { stringValue: value };
@@ -114,7 +99,6 @@ function toFirestoreFields(obj: Record<string, unknown>): Record<string, unknown
   return fields;
 }
 
-/** Inverse of toFirestoreValue — REST API's typed "Value" wire format back to plain JS. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fromFirestoreValue(value: any): unknown {
   if (value == null) return null;
@@ -143,17 +127,8 @@ export class FirestoreClient {
     return `https://firestore.googleapis.com/v1/projects/${this.serviceAccount.project_id}/databases/(default)/documents`;
   }
 
-  private static readonly DATASTORE_SCOPE = 'https://www.googleapis.com/auth/datastore';
-
-  /**
-   * Reads a single document, or null if it doesn't exist. Added so
-   * `syncYoutube` can compare the live-status doc's previous value
-   * against the freshly fetched one — replacing what `onLiveStatusChanged`
-   * (a Firestore trigger, Cloud-Functions-only) used to do — without
-   * needing a second product to hold "was it live last time" state.
-   */
   async get(path: string): Promise<Record<string, unknown> | null> {
-    const token = await getAccessToken(this.serviceAccount, FirestoreClient.DATASTORE_SCOPE);
+    const token = await getAccessToken(this.serviceAccount);
     const resp = await fetch(`${this.baseUrl}/${path}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -166,39 +141,37 @@ export class FirestoreClient {
   }
 
   /**
-   * Merge-sets fields on a document — matches `firebase-admin`'s
-   * `.set(data, {merge: true})`, which is what `youtubeSync.ts`'s Cloud
-   * Function version uses. Implemented via PATCH + `updateMask` listing
-   * every top-level field being written, which is Firestore REST's
-   * documented way to achieve merge semantics (only touches the listed
-   * fields; leaves any others on the document alone).
+   * Set semantics (not merge) — used only for daily_verse/daily_prayer,
+   * which are always brand-new docs for a never-seen-before date key, so
+   * merge-vs-set doesn't matter in practice here (unlike YouTube's
+   * repeatedly-updated video docs, where merge matters a lot).
    */
-  async mergeSet(path: string, data: Record<string, unknown>): Promise<void> {
-    const token = await getAccessToken(this.serviceAccount, FirestoreClient.DATASTORE_SCOPE);
-    const mask = Object.keys(data)
-      .map((k) => `updateMask.fieldPaths=${encodeURIComponent(k)}`)
-      .join('&');
-    const url = `${this.baseUrl}/${path}?${mask}`;
-
-    const resp = await fetch(url, {
+  async set(path: string, data: Record<string, unknown>): Promise<void> {
+    const token = await getAccessToken(this.serviceAccount);
+    const resp = await fetch(`${this.baseUrl}/${path}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: toFirestoreFields(data) }),
     });
-
     if (!resp.ok) {
       throw new Error(`Firestore write failed for "${path}": ${resp.status} ${await resp.text()}`);
     }
   }
 
-  /**
-   * Structured-query equivalent of `.collection('users').where('fcm_token', '!=', null)`.
-   * Firestore REST has no simple "not equal to null" shortcut the way
-   * the Admin SDK's query builder does, so this uses `runQuery` with an
-   * explicit `NOT_EQUAL` op — documented as Firestore's REST equivalent.
-   */
+  async createDoc(collection: string, data: Record<string, unknown>): Promise<void> {
+    const token = await getAccessToken(this.serviceAccount);
+    const resp = await fetch(`${this.baseUrl}/${collection}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: toFirestoreFields(data) }),
+    });
+    if (!resp.ok) {
+      throw new Error(`Firestore create failed in "${collection}": ${resp.status} ${await resp.text()}`);
+    }
+  }
+
   async queryUsersWithFcmToken(): Promise<Array<{ uid: string; token: string }>> {
-    const token = await getAccessToken(this.serviceAccount, FirestoreClient.DATASTORE_SCOPE);
+    const token = await getAccessToken(this.serviceAccount);
     const resp = await fetch(`${this.baseUrl}:runQuery`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -230,16 +203,59 @@ export class FirestoreClient {
       .filter((u) => !!u.token);
   }
 
-  /** Creates a new document with a server-generated ID — Firestore REST's POST-to-collection convention. */
-  async createDoc(collection: string, data: Record<string, unknown>): Promise<void> {
-    const token = await getAccessToken(this.serviceAccount, FirestoreClient.DATASTORE_SCOPE);
-    const resp = await fetch(`${this.baseUrl}/${collection}`, {
+  /**
+   * Returns up to `limit` document paths in `collection` whose
+   * `created_at` is older than `cutoff` — the REST equivalent of
+   * `cleanupSchedule`'s `.where('created_at', '<', cutoff).limit(300)`.
+   * `cleanup.ts` pages through this in a loop the same way the Cloud
+   * Function did, since REST's `runQuery` has the same per-call result
+   * cap concerns as any Firestore query.
+   */
+  async queryOlderThan(collection: string, cutoff: Date, limit: number): Promise<string[]> {
+    const token = await getAccessToken(this.serviceAccount);
+    const resp = await fetch(`${this.baseUrl}:runQuery`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: toFirestoreFields(data) }),
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: collection }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: 'created_at' },
+              op: 'LESS_THAN',
+              value: { timestampValue: cutoff.toISOString() },
+            },
+          },
+          limit,
+        },
+      }),
     });
     if (!resp.ok) {
-      throw new Error(`Firestore create failed in "${collection}": ${resp.status} ${await resp.text()}`);
+      throw new Error(`Firestore query failed for "${collection}": ${resp.status} ${await resp.text()}`);
+    }
+    const rows = (await resp.json()) as Array<{ document?: { name: string } }>;
+    return rows.filter((r) => r.document).map((r) => r.document!.name);
+  }
+
+  /**
+   * Firestore REST has a `:commit` batch-write endpoint (unlike the
+   * per-doc-only PATCH/POST used elsewhere in this file) — used here
+   * instead of one DELETE call per doc, both for speed and to stay
+   * further under the Workers Free plan's 50-subrequest-per-invocation
+   * cap when pruning hundreds of stale docs.
+   */
+  async batchDelete(documentNames: string[]): Promise<void> {
+    if (documentNames.length === 0) return;
+    const token = await getAccessToken(this.serviceAccount);
+    const resp = await fetch(`${this.baseUrl}:commit`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        writes: documentNames.map((name) => ({ delete: name })),
+      }),
+    });
+    if (!resp.ok) {
+      throw new Error(`Firestore batch delete failed: ${resp.status} ${await resp.text()}`);
     }
   }
 }

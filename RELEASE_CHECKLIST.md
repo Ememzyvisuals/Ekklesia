@@ -20,13 +20,22 @@ completed work.
 ## Firebase
 
 - [ ] Firestore rules deployed and reviewed (not left in test mode)
-- [ ] `GROQ_API_KEY` and `YOUTUBE_API_KEY` set in Secret Manager, not
-      anywhere in the client bundle
-- [ ] All scheduled functions confirmed running (check
-      `firebase functions:log` over at least one full daily cycle)
-- [ ] Billing alerts configured (Blaze plan — Cloud Functions/Scheduler
+- [ ] If deploying `functions/` as a rollback path (optional — see
+      `PHASE2_NOTES.md`, not required by default): `GROQ_API_KEY` and
+      `YOUTUBE_API_KEY` set in Secret Manager, not anywhere in the
+      client bundle; all scheduled functions confirmed running (check
+      `firebase functions:log` over at least one full daily cycle);
+      billing alerts configured (Blaze plan — Cloud Functions/Scheduler
       have real costs at scale, even within free-tier quotas for most
       apps)
+- [ ] If using the default Cloudflare Workers path instead: `GROQ_API_KEY`,
+      `YOUTUBE_API_KEY`, and `GOOGLE_SERVICE_ACCOUNT_JSON` set as Worker
+      secrets (`wrangler secret put ...`) for all three Workers — see
+      each Worker's README.md
+- [ ] All three Cron Triggers (`daily-content`) and the `youtube-sync`
+      trigger confirmed running (`wrangler tail` over at least one full
+      daily cycle — no built-in retries, so a silent failure stays
+      silent until you check)
 
 ## Store requirements (do these — they're not code changes)
 

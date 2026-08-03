@@ -23,7 +23,7 @@ supposed to get built.
 | Home | 🟡 Mostly done | Live verse/prayer/program cards are real (worker-backed). Category grid is a documented static placeholder — doesn't filter sermons by category yet. |
 | Bible (offline engine) | 🟢 Core done | All 5 languages imported from real verse-aligned data (see `BIBLE_IMPORT_NOTES.md`), reader, search, bookmarks, highlights, notes, continue reading, streak, chapter audio with local caching. No reading-history stats screen, no chunked TTS streaming queue. |
 | AI Assistant | 🟢 Done, key exposure fixed + usage-limited + moved off Firebase | Groq chat now via a Cloudflare Worker (`cloudflare/groq-proxy/`), not Firebase Cloud Functions — specifically to avoid requiring the Blaze plan. 20/day soft cap on the shared proxy (`GroqUsageService`) plus bring-your-own-key (`UserGroqKeyService`) for unlimited access. Not tested against a live Cloudflare account or a live Firebase project. |
-| Sermons/Radio | 🟢 Done, key exposure fixed + moved off Firebase | YouTube sync now via a Cloudflare Worker (`cloudflare/youtube-sync/`), not Firebase Cloud Functions — the second and last piece of avoiding Blaze for the two things actually asked about. This one also writes to Firestore itself (real Google Service Account, hand-rolled OAuth2 — flagged as the highest-risk untested piece of this project). DCLM radio stream verified against official source; radio player UI redesigned this pass (premium card, animated play button). Not tested against a live Cloudflare/GCP/Firebase setup. |
+| Sermons/Radio | 🟢 Done, key exposure fixed + moved off Firebase | YouTube sync now via a Cloudflare Worker (`cloudflare/youtube-sync/`), not Firebase Cloud Functions. This one also writes to Firestore itself (real Google Service Account, hand-rolled OAuth2 — flagged as the highest-risk untested piece of this project) and sends the live-status push notification inline, replacing `onLiveStatusChanged`. DCLM radio stream verified against official source; radio player UI redesigned this pass (premium card, animated play button). Not tested against a live Cloudflare/GCP/Firebase setup. |
 | Downloads | 🟢 Done (pre-existing) | Queue/pause/resume/retry, not touched this pass. |
 | Bookmarks | 🟢 Done (pre-existing + extended) | Now also covers Bible verses via the same `BookmarkButton`. |
 | Search | 🟢 Done | Federated across Bible (real offline full-text, added this pass), sermons, bookmarks, downloads, AI conversations, settings. |
@@ -147,17 +147,24 @@ guessed generically.
 
 ## Blaze avoidance — current real status
 
-Groq and YouTube sync (the two things actually asked about) are now
-fully off Firebase Cloud Functions, running on Cloudflare Workers
-instead. **This does not mean Blaze is avoidable yet if `functions/` is
-deployed as-is** — `dailyVerseSchedule`, `dailyPrayerSchedule`,
-`cleanupSchedule`, and the three notification-fan-out triggers still
-require it. See `PHASE2_NOTES.md`'s honesty note for exactly what each
-one costs if `functions/` is never deployed at all (short version: daily
-verse/prayer/cleanup all have client-side fallbacks already built and
-keep working fine; push notifications for new verse/prayer/live-status
-have no client-side equivalent and would simply stop, unless migrated
-too — not done this pass).
+**Fully closed as of this pass.** Groq, YouTube sync, daily verse/prayer
+generation, cleanup, and all push-notification fan-out are all off
+Firebase Cloud Functions now, running on three Cloudflare Workers
+instead (`cloudflare/groq-proxy/`, `cloudflare/youtube-sync/`,
+`cloudflare/daily-content/`). `functions/` is fully superseded and never
+needs to be deployed — kept in the repo only as a manual rollback path.
+The two Firestore-triggered notification functions that couldn't be
+mechanically ported (Workers has no Firestore-trigger equivalent) were
+replaced by sending the push inline, right after the write that used to
+trigger them — see `cloudflare/daily-content/README.md`'s "why this
+needed actual research" section for that reasoning, and
+`PHASE2_NOTES.md` for the full migration history.
+
+**What's still genuinely unverified**: none of the three Workers have
+been tested against a real deployed Cloudflare account, GCP service
+account, or Firebase project — there's no live infrastructure in this
+sandbox to verify against. Deploy and exercise each Worker's manual-
+trigger endpoint before trusting its cron schedule unattended.
 
 ## Known environment limitations (why some things aren't done)
 

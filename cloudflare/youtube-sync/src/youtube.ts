@@ -89,7 +89,7 @@ async function fetchJson(url: string): Promise<any> {
 export async function syncYoutube(
   apiKey: string,
   firestore: FirestoreClient,
-): Promise<{ videos: number; live: boolean }> {
+): Promise<{ videos: number; live: boolean; liveTransition: { title: string; videoId: string } | null }> {
   const channelUrl = `${YT_BASE}/channels?part=contentDetails&id=${CHANNEL_ID}&key=${apiKey}`;
   const channelJson = await fetchJson(channelUrl);
   const uploadsPlaylistId = channelJson.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
@@ -126,7 +126,16 @@ export async function syncYoutube(
   const searchJson = await fetchJson(searchUrl);
   const liveVideoId = searchJson.items?.[0]?.id?.videoId;
 
+  // Read the doc's previous state before overwriting it — this is what
+  // replaces `onLiveStatusChanged` (a Firestore-triggered Cloud Function,
+  // which only exists in that runtime). Only fires the notification on
+  // the not-live -> live transition, same rule the original had, just
+  // computed inline instead of via a before/after trigger diff.
+  const previous = await firestore.get('config/youtube_live_status');
+  const wasLive = !!previous?.video_id && previous?.live_status === 'live';
+
   let isLive = false;
+  let liveTransition: { title: string; videoId: string } | null = null;
   if (liveVideoId) {
     const detailsUrl = `${YT_BASE}/videos?part=snippet,contentDetails,liveStreamingDetails&id=${liveVideoId}&key=${apiKey}`;
     const detailsJson = await fetchJson(detailsUrl);
@@ -135,11 +144,14 @@ export async function syncYoutube(
       const entry = videoEntryFromApiItem(item);
       await firestore.mergeSet('config/youtube_live_status', entry);
       isLive = true;
+      if (!wasLive) {
+        liveTransition = { title: (entry.title as string) ?? 'DCLM is live now', videoId: liveVideoId };
+      }
     }
   }
   if (!isLive) {
-    await firestore.mergeSet('config/youtube_live_status', { video_id: null });
+    await firestore.mergeSet('config/youtube_live_status', { video_id: null, live_status: 'none' });
   }
 
-  return { videos: written, live: isLive };
+  return { videos: written, live: isLive, liveTransition };
 }

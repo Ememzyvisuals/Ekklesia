@@ -2,8 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stores a personal Groq API key the user got themselves from
 /// console.groq.com/keys, so [GroqService] can call Groq directly with
-/// it instead of going through the shared `groqChat` Cloud Function
-/// callable (and instead of counting against [GroqUsageService]'s daily
+/// it instead of going through the shared `groqChat` Cloudflare Worker
+/// endpoint (and instead of counting against [GroqUsageService]'s daily
 /// cap on the shared key).
 ///
 /// This is NOT the same security concern the Groq/YouTube Cloud Functions

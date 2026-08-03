@@ -19,6 +19,18 @@ jobs:
 
       - run: flutter pub get
 
+      # pubspec.yaml declares `.env` as a bundled asset (dotenv.load in
+      # main.dart needs it to exist at runtime), but .env is correctly
+      # gitignored — real secrets never get committed. .env.example IS
+      # committed with placeholder values, which is all analyze/build
+      # actually need to see a real file at that path; the placeholder
+      # values are never used for anything live in CI. Without this step,
+      # `dart analyze` reports `.env` as a missing asset
+      # (asset_does_not_exist) — one of the issues this workflow's strict
+      # "fails on any issue" gate was tripping on.
+      - name: Create .env from .env.example for CI
+        run: cp .env.example .env
+
       # See flutter_ci.yml's identical step for why this is required, not
       # optional — analyze fails on missing generated files otherwise.
       - name: Generate Isar schema code
