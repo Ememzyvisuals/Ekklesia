@@ -93,7 +93,8 @@ class AppConfig {
     'igala': 18,
   };
 
-  static const String dclmNowPlayingBaseUrl = 'https://stat1.dclm.org/api/nowplaying';
+  static const String dclmNowPlayingBaseUrl =
+      'https://stat1.dclm.org/api/nowplaying';
 
   static const Map<String, String> dclmPageFallback = {
     'yoruba': 'https://radio.dclm.org/yoruba',
@@ -119,7 +120,8 @@ class AppConfig {
   // see cloudflare/groq-proxy/README.md for the reasoning and current
   // verified free-tier numbers. The client never holds the Groq key
   // either way; only where the proxy lives changed.
-  static const String groqProxyBaseUrl = 'https://ekklesia-groq-proxy.YOUR-SUBDOMAIN.workers.dev';
+  static const String groqProxyBaseUrl =
+      'https://ekklesia-groq-proxy.YOUR-SUBDOMAIN.workers.dev';
   // ^ Placeholder — replace with your real Worker URL after your first
   // `wrangler deploy` (cloudflare/groq-proxy/README.md). GroqService and
   // AIConfig both read this constant; nothing else needs updating.
@@ -131,7 +133,8 @@ class AppConfig {
   // treatment too (cloudflare/daily-content/, no client-facing base URL
   // here since the client never calls that Worker directly) before
   // Blaze was actually fully avoidable app-wide — see PHASE2_NOTES.md.
-  static const String youtubeSyncProxyBaseUrl = 'https://ekklesia-youtube-sync.YOUR-SUBDOMAIN.workers.dev';
+  static const String youtubeSyncProxyBaseUrl =
+      'https://ekklesia-youtube-sync.YOUR-SUBDOMAIN.workers.dev';
   // ^ Placeholder — replace after your first `wrangler deploy` there.
   // YoutubeRepository.refresh() reads this constant.
 

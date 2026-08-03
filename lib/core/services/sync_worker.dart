@@ -75,7 +75,8 @@ class SyncWorker {
     await prefs.setStringList(_pendingWritesKey, stillPending);
   }
 
-  Future<void> _addPendingWrite(String collection, String docId, Map<String, dynamic> data) async {
+  Future<void> _addPendingWrite(
+      String collection, String docId, Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
     final pending = prefs.getStringList(_pendingWritesKey) ?? [];
     pending.add('$collection||$docId||queued');

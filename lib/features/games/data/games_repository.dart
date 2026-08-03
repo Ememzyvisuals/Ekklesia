@@ -18,10 +18,8 @@ class GamesRepository {
 
   Future<Result<List<GameEntry>>> fetchCatalog() async {
     try {
-      final snapshot = await _firestore
-          .collection('games')
-          .orderBy('title')
-          .get();
+      final snapshot =
+          await _firestore.collection('games').orderBy('title').get();
 
       final entries = snapshot.docs
           .map((doc) => GameEntry.fromFirestore(doc.id, doc.data()))
@@ -30,7 +28,8 @@ class GamesRepository {
       return Result.success(entries);
     } on FirebaseException catch (e) {
       return Result.failure(AppFailure(
-        message: 'Couldn\'t load Games right now — check your connection and try again.',
+        message:
+            'Couldn\'t load Games right now — check your connection and try again.',
         debugDetail: '${e.code}: ${e.message}',
       ));
     } catch (e) {

@@ -9,7 +9,8 @@
 enum AvatarGender { male, female }
 
 class AvatarOption {
-  const AvatarOption({required this.id, required this.assetPath, required this.gender});
+  const AvatarOption(
+      {required this.id, required this.assetPath, required this.gender});
   final String id;
   final String assetPath;
   final AvatarGender gender;
@@ -20,12 +21,30 @@ class AvatarService {
   static final AvatarService instance = AvatarService._internal();
 
   static const List<AvatarOption> catalog = [
-    AvatarOption(id: 'male_01', assetPath: 'assets/avatars/avatar_male_01.svg', gender: AvatarGender.male),
-    AvatarOption(id: 'male_02', assetPath: 'assets/avatars/avatar_male_02.svg', gender: AvatarGender.male),
-    AvatarOption(id: 'male_03', assetPath: 'assets/avatars/avatar_male_03.svg', gender: AvatarGender.male),
-    AvatarOption(id: 'female_01', assetPath: 'assets/avatars/avatar_female_01.svg', gender: AvatarGender.female),
-    AvatarOption(id: 'female_02', assetPath: 'assets/avatars/avatar_female_02.svg', gender: AvatarGender.female),
-    AvatarOption(id: 'female_03', assetPath: 'assets/avatars/avatar_female_03.svg', gender: AvatarGender.female),
+    AvatarOption(
+        id: 'male_01',
+        assetPath: 'assets/avatars/avatar_male_01.svg',
+        gender: AvatarGender.male),
+    AvatarOption(
+        id: 'male_02',
+        assetPath: 'assets/avatars/avatar_male_02.svg',
+        gender: AvatarGender.male),
+    AvatarOption(
+        id: 'male_03',
+        assetPath: 'assets/avatars/avatar_male_03.svg',
+        gender: AvatarGender.male),
+    AvatarOption(
+        id: 'female_01',
+        assetPath: 'assets/avatars/avatar_female_01.svg',
+        gender: AvatarGender.female),
+    AvatarOption(
+        id: 'female_02',
+        assetPath: 'assets/avatars/avatar_female_02.svg',
+        gender: AvatarGender.female),
+    AvatarOption(
+        id: 'female_03',
+        assetPath: 'assets/avatars/avatar_female_03.svg',
+        gender: AvatarGender.female),
   ];
 
   List<AvatarOption> forGender(AvatarGender gender) =>
@@ -35,9 +54,11 @@ class AvatarService {
   /// re-running this (app restart, profile reload) always lands on the same
   /// avatar rather than reshuffling it on every rebuild. Users can still
   /// override via [byId] through the avatar picker UI.
-  AvatarOption pickDefault({required AvatarGender gender, required String seed}) {
+  AvatarOption pickDefault(
+      {required AvatarGender gender, required String seed}) {
     final options = forGender(gender);
-    final index = seed.codeUnits.fold<int>(0, (sum, c) => sum + c) % options.length;
+    final index =
+        seed.codeUnits.fold<int>(0, (sum, c) => sum + c) % options.length;
     return options[index];
   }
 

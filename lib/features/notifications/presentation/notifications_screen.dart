@@ -44,9 +44,12 @@ class NotificationsScreen extends StatelessWidget {
     final uid = AuthService.instance.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.notificationsTitle)),
+      appBar:
+          AppBar(title: Text(AppLocalizations.of(context).notificationsTitle)),
       body: uid == null
-          ? Center(child: Text(AppLocalizations.of(context)!.notificationsSignInPrompt))
+          ? Center(
+              child:
+                  Text(AppLocalizations.of(context).notificationsSignInPrompt))
           : StreamBuilder<List<CategorizedNotification>>(
               stream: NotificationWorker.instance.stream(uid),
               builder: (context, snapshot) {
@@ -69,7 +72,7 @@ class NotificationsScreen extends StatelessWidget {
                 if (notifications.isEmpty) {
                   return Center(
                     child: Text(
-                      AppLocalizations.of(context)!.notificationsEmpty,
+                      AppLocalizations.of(context).notificationsEmpty,
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   );
@@ -82,20 +85,26 @@ class NotificationsScreen extends StatelessWidget {
                     return ListTile(
                       leading: Icon(
                         _iconFor(n.category),
-                        color: n.read ? AppColors.textSecondary : AppColors.primary,
+                        color: n.read
+                            ? AppColors.textSecondary
+                            : AppColors.primary,
                       ),
                       title: Text(
                         n.title,
                         style: TextStyle(
-                          fontWeight: n.read ? FontWeight.normal : FontWeight.bold,
+                          fontWeight:
+                              n.read ? FontWeight.normal : FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(n.body),
                       trailing: Text(
                         DateFormat('MMM d, h:mm a').format(n.createdAt),
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.textSecondary),
                       ),
-                      onTap: n.read ? null : () => NotificationWorker.instance.markAsRead(n.id),
+                      onTap: n.read
+                          ? null
+                          : () => NotificationWorker.instance.markAsRead(n.id),
                     );
                   },
                 );

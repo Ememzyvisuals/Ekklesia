@@ -39,7 +39,8 @@ class AudioService {
   /// call, as (index, total) — e.g. (0, 3) for the first of three chunks.
   /// Null when nothing queued is playing. Useful for a "part 2 of 5" label.
   final _queueProgressController = StreamController<(int, int)?>.broadcast();
-  Stream<(int, int)?> get queueProgressStream => _queueProgressController.stream;
+  Stream<(int, int)?> get queueProgressStream =>
+      _queueProgressController.stream;
 
   /// Plays a clip from [url], applying the correct speed for [source].
   ///

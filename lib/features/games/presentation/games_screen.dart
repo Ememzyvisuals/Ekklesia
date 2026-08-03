@@ -34,7 +34,8 @@ class _GamesScreenState extends State<GamesScreen> {
   Future<void> _openGame(GameEntry game) async {
     if (game.isEmbeddable) {
       Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => GameWebViewScreen(title: game.title, url: game.embedUrl!),
+        builder: (_) =>
+            GameWebViewScreen(title: game.title, url: game.embedUrl!),
       ));
       return;
     }
@@ -54,9 +55,11 @@ class _GamesScreenState extends State<GamesScreen> {
         onRefresh: _load,
         child: switch (_result) {
           ResultLoading() => const Center(child: CircularProgressIndicator()),
-          ResultFailure(failure: final f) => _ErrorState(message: f.message, onRetry: _load),
-          ResultSuccess(data: final games) =>
-            games.isEmpty ? const _EmptyState() : _GameGrid(games: games, onTap: _openGame),
+          ResultFailure(failure: final f) =>
+            _ErrorState(message: f.message, onRetry: _load),
+          ResultSuccess(data: final games) => games.isEmpty
+              ? const _EmptyState()
+              : _GameGrid(games: games, onTap: _openGame),
         },
       ),
     );
@@ -75,10 +78,13 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(32),
       children: [
         const SizedBox(height: 60),
-        Icon(Icons.videogame_asset_outlined, size: 56, color: AppTheme.textSecondary(context)),
+        Icon(Icons.videogame_asset_outlined,
+            size: 56, color: AppTheme.textSecondary(context)),
         const SizedBox(height: 20),
         Center(
-          child: Text('No games yet', style: AppTypography.titleMedium(color: AppTheme.textPrimary(context))),
+          child: Text('No games yet',
+              style: AppTypography.titleMedium(
+                  color: AppTheme.textPrimary(context))),
         ),
         const SizedBox(height: 8),
         Center(
@@ -87,7 +93,8 @@ class _EmptyState extends StatelessWidget {
             'permission to link or embed — nothing scraped, nothing added '
             'without a real license. Check back as new titles are approved.',
             textAlign: TextAlign.center,
-            style: AppTypography.bodyMedium(color: AppTheme.textSecondary(context)),
+            style: AppTypography.bodyMedium(
+                color: AppTheme.textSecondary(context)),
           ),
         ),
       ],
@@ -110,7 +117,9 @@ class _ErrorState extends StatelessWidget {
         const SizedBox(height: 16),
         Center(child: Text(message, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
-        Center(child: ElevatedButton(onPressed: onRetry, child: const Text('Retry'))),
+        Center(
+            child:
+                ElevatedButton(onPressed: onRetry, child: const Text('Retry'))),
       ],
     );
   }
@@ -150,7 +159,8 @@ class _GameGrid extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: game.thumbnailUrl,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(color: AppColors.secondary),
+                    placeholder: (_, __) =>
+                        Container(color: AppColors.secondary),
                     errorWidget: (_, __, ___) => Container(
                       color: AppColors.secondary,
                       child: const Icon(Icons.videogame_asset_outlined),
@@ -162,11 +172,15 @@ class _GameGrid extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(game.title, style: AppTypography.titleSmall(color: AppTheme.textPrimary(context)),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(game.title,
+                          style: AppTypography.titleSmall(
+                              color: AppTheme.textPrimary(context)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 4),
                       Text('${game.category} · ${game.ageRating}',
-                          style: AppTypography.caption(color: AppTheme.textSecondary(context))),
+                          style: AppTypography.caption(
+                              color: AppTheme.textSecondary(context))),
                     ],
                   ),
                 ),

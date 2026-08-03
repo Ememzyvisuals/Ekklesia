@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
@@ -20,22 +18,28 @@ class YoutubeRepository {
   /// "avoid battery drain" rule for workers applies here too.
   Future<Result<List<VideoEntry>>> getCachedUploads({String? category}) async {
     try {
-      Query query = _firestore.collection(AppConfig.youtubeCacheCollection).orderBy('published_at', descending: true);
+      Query query = _firestore
+          .collection(AppConfig.youtubeCacheCollection)
+          .orderBy('published_at', descending: true);
       if (category != null) {
         query = query.where('category', isEqualTo: category);
       }
       final snapshot = await query.limit(50).get();
       final videos = snapshot.docs
-          .map((doc) => VideoEntry.fromFirestore(doc.data() as Map<String, dynamic>))
+          .map((doc) =>
+              VideoEntry.fromFirestore(doc.data() as Map<String, dynamic>))
           .toList();
       return Result.success(videos);
     } on FirebaseException catch (e) {
       return Result.failure(AppFailure(
-        message: 'Couldn\'t load messages right now — check your connection and try again.',
+        message:
+            'Couldn\'t load messages right now — check your connection and try again.',
         debugDetail: '${e.code}: ${e.message}',
       ));
     } catch (e) {
-      return Result.failure(AppFailure(message: 'Something went wrong loading messages.', debugDetail: e.toString()));
+      return Result.failure(AppFailure(
+          message: 'Something went wrong loading messages.',
+          debugDetail: e.toString()));
     }
   }
 
@@ -45,7 +49,8 @@ class YoutubeRepository {
         .doc(AppConfig.youtubeLiveStatusDoc)
         .snapshots()
         .map((doc) {
-      if (!doc.exists || doc.data() == null || doc.data()!['video_id'] == null) return null;
+      if (!doc.exists || doc.data() == null || doc.data()!['video_id'] == null)
+        return null;
       return VideoEntry.fromFirestore(doc.data()!);
     });
   }
@@ -75,7 +80,8 @@ class YoutubeRepository {
     try {
       final idToken = await AuthService.instance.getIdToken();
       if (idToken == null) {
-        return Result.failure(AppFailure(message: 'Sign in to refresh messages.'));
+        return Result.failure(
+            AppFailure(message: 'Sign in to refresh messages.'));
       }
 
       final response = await http.post(

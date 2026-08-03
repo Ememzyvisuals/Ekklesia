@@ -89,7 +89,8 @@ class ProgramWorker {
     }
 
     final cachedResult = await _youtubeRepository.getCachedUploads();
-    if (cachedResult is ResultSuccess<List<VideoEntry>> && cachedResult.data.isNotEmpty) {
+    if (cachedResult is ResultSuccess<List<VideoEntry>> &&
+        cachedResult.data.isNotEmpty) {
       recent = cachedResult.data.first;
     }
 
@@ -109,9 +110,10 @@ class ProgramWorker {
         .collection(AppConfig.programsCollection)
         .where('day_of_week', isEqualTo: weekday)
         .get();
-    final rules = snapshot.docs.map((d) => ProgramRule.fromFirestore(d.data())).toList();
-    rules.sort((a, b) =>
-        (a.startHour * 60 + a.startMinute).compareTo(b.startHour * 60 + b.startMinute));
+    final rules =
+        snapshot.docs.map((d) => ProgramRule.fromFirestore(d.data())).toList();
+    rules.sort((a, b) => (a.startHour * 60 + a.startMinute)
+        .compareTo(b.startHour * 60 + b.startMinute));
     return rules;
   }
 }

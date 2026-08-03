@@ -42,12 +42,15 @@ void main() {
     });
 
     test('throws BibleReferenceException for an unparseable string', () {
-      expect(() => parseBibleReference('not a reference'), throwsA(isA<BibleReferenceException>()));
-      expect(() => parseBibleReference(''), throwsA(isA<BibleReferenceException>()));
+      expect(() => parseBibleReference('not a reference'),
+          throwsA(isA<BibleReferenceException>()));
+      expect(() => parseBibleReference(''),
+          throwsA(isA<BibleReferenceException>()));
     });
 
     test('throws BibleReferenceException for an unknown book name', () {
-      expect(() => parseBibleReference('Frodo 3:16'), throwsA(isA<BibleReferenceException>()));
+      expect(() => parseBibleReference('Frodo 3:16'),
+          throwsA(isA<BibleReferenceException>()));
     });
   });
 }

@@ -61,11 +61,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return YoutubePlayerBuilder(
-      player: YoutubePlayer(controller: _controller, showVideoProgressIndicator: true),
+      player: YoutubePlayer(
+          controller: _controller, showVideoProgressIndicator: true),
       builder: (context, player) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.video.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            title: Text(widget.video.title,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
             actions: [
               BookmarkButton(
                 type: BookmarkType.sermon,
@@ -85,27 +87,37 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   children: [
                     Row(
                       children: [
-                        if (widget.video.liveStatus == LiveStatus.live) _LiveBadge(),
+                        if (widget.video.liveStatus == LiveStatus.live)
+                          _LiveBadge(),
                         if (widget.video.category != null) ...[
                           const SizedBox(width: 8),
-                          Chip(label: Text(widget.video.category!), backgroundColor: AppColors.secondary),
+                          Chip(
+                              label: Text(widget.video.category!),
+                              backgroundColor: AppColors.secondary),
                         ],
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(widget.video.title, style: AppTypography.titleLarge(color: AppTheme.textPrimary(context))),
+                    Text(widget.video.title,
+                        style: AppTypography.titleLarge(
+                            color: AppTheme.textPrimary(context))),
                     const SizedBox(height: 6),
                     Text(
                       DateFormat.yMMMd().format(widget.video.publishedAt),
-                      style: AppTypography.bodySmall(color: AppTheme.textSecondary(context)),
+                      style: AppTypography.bodySmall(
+                          color: AppTheme.textSecondary(context)),
                     ),
                     const SizedBox(height: 24),
                     _OverviewSection(result: _overview, onRetry: _loadOverview),
                     if (widget.video.description.isNotEmpty) ...[
                       const SizedBox(height: 24),
-                      Text('Description', style: AppTypography.titleSmall(color: AppTheme.textPrimary(context))),
+                      Text('Description',
+                          style: AppTypography.titleSmall(
+                              color: AppTheme.textPrimary(context))),
                       const SizedBox(height: 8),
-                      Text(widget.video.description, style: AppTypography.bodyMedium(color: AppTheme.textSecondary(context))),
+                      Text(widget.video.description,
+                          style: AppTypography.bodyMedium(
+                              color: AppTheme.textSecondary(context))),
                     ],
                   ],
                 ),
@@ -123,13 +135,18 @@ class _LiveBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: AppColors.error, borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(
+          color: AppColors.error, borderRadius: BorderRadius.circular(6)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.circle, size: 8, color: Colors.white),
           SizedBox(width: 6),
-          Text('LIVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+          Text('LIVE',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12)),
         ],
       ),
     );
@@ -146,7 +163,9 @@ class _OverviewSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.surface(context), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+          color: AppTheme.surface(context),
+          borderRadius: BorderRadius.circular(20)),
       child: switch (result) {
         null || ResultLoading() => const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
@@ -155,7 +174,9 @@ class _OverviewSection extends StatelessWidget {
         ResultFailure(failure: final f) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(f.message, style: AppTypography.bodyMedium(color: AppTheme.textSecondary(context))),
+              Text(f.message,
+                  style: AppTypography.bodyMedium(
+                      color: AppTheme.textSecondary(context))),
               const SizedBox(height: 8),
               TextButton(onPressed: onRetry, child: const Text('Retry')),
             ],
@@ -165,24 +186,36 @@ class _OverviewSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_awesome, size: 18, color: AppColors.accent),
+                  const Icon(Icons.auto_awesome,
+                      size: 18, color: AppColors.accent),
                   const SizedBox(width: 8),
-                  Text('AI overview', style: AppTypography.titleSmall(color: AppTheme.textPrimary(context))),
+                  Text('AI overview',
+                      style: AppTypography.titleSmall(
+                          color: AppTheme.textPrimary(context))),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
                 'Based on the title and description — not a transcript of the message.',
-                style: AppTypography.caption(color: AppTheme.textSecondary(context)),
+                style: AppTypography.caption(
+                    color: AppTheme.textSecondary(context)),
               ),
               const SizedBox(height: 12),
-              Text('Topic', style: AppTypography.bodySmall(color: AppTheme.textSecondary(context))),
-              Text(overview.topic, style: AppTypography.bodyLarge(color: AppTheme.textPrimary(context))),
+              Text('Topic',
+                  style: AppTypography.bodySmall(
+                      color: AppTheme.textSecondary(context))),
+              Text(overview.topic,
+                  style: AppTypography.bodyLarge(
+                      color: AppTheme.textPrimary(context))),
               const SizedBox(height: 12),
-              Text(overview.summary, style: AppTypography.bodyMedium(color: AppTheme.textPrimary(context))),
+              Text(overview.summary,
+                  style: AppTypography.bodyMedium(
+                      color: AppTheme.textPrimary(context))),
               if (overview.pointsToConsider.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text('Points to consider', style: AppTypography.bodySmall(color: AppTheme.textSecondary(context))),
+                Text('Points to consider',
+                    style: AppTypography.bodySmall(
+                        color: AppTheme.textSecondary(context))),
                 const SizedBox(height: 6),
                 ...overview.pointsToConsider.map((p) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
@@ -190,7 +223,10 @@ class _OverviewSection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('•  '),
-                          Expanded(child: Text(p, style: AppTypography.bodyMedium(color: AppTheme.textPrimary(context)))),
+                          Expanded(
+                              child: Text(p,
+                                  style: AppTypography.bodyMedium(
+                                      color: AppTheme.textPrimary(context)))),
                         ],
                       ),
                     )),

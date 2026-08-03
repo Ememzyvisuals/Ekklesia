@@ -18,7 +18,8 @@ class ArchivedMessage {
 
   final String id;
   final String title;
-  final String category; // Sunday Service | Bible Study | GCK | Programs | Impact Academy
+  final String
+      category; // Sunday Service | Bible Study | GCK | Programs | Impact Academy
   final String transcript;
   final String? summary;
   final List<Map<String, dynamic>>? quiz;

@@ -50,7 +50,8 @@ class IsarService {
   Isar get isar {
     final instance = _isar;
     if (instance == null) {
-      throw StateError('IsarService.open() must be awaited in main() before use.');
+      throw StateError(
+          'IsarService.open() must be awaited in main() before use.');
     }
     return instance;
   }

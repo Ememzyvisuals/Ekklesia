@@ -36,7 +36,8 @@ class ResultFailure<T> extends Result<T> {
 /// separate [debugDetail] for Logger — never the reverse, so a stack trace
 /// never accidentally ends up in front of a user.
 class AppFailure {
-  const AppFailure({required this.message, this.debugDetail, this.retryable = true});
+  const AppFailure(
+      {required this.message, this.debugDetail, this.retryable = true});
   final String message;
   final String? debugDetail;
   final bool retryable;

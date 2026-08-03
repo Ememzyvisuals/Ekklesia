@@ -18,7 +18,8 @@ void main() {
       expect(codes.length, 66);
     });
 
-    test('Old Testament is exactly the first 39 by position (Genesis..Malachi)', () {
+    test('Old Testament is exactly the first 39 by position (Genesis..Malachi)',
+        () {
       final ot = kCanonicalBooks.where((b) => b.testament == 'OT').toList();
       expect(ot.length, 39);
       expect(ot.map((b) => b.position).reduce((a, b) => a > b ? a : b), 39);

@@ -44,31 +44,46 @@ final GoRouter appRouter = GoRouter(
   refreshListenable: _authRefreshNotifier,
   redirect: (context, state) {
     final loggedIn = AuthService.instance.isSignedIn;
-    final goingToAuth = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+    final goingToAuth =
+        state.matchedLocation == '/login' || state.matchedLocation == '/signup';
     final goingToOnboarding = state.matchedLocation == '/onboarding';
 
     if (!onboardingSeenCache && !goingToOnboarding) return '/onboarding';
-    if (onboardingSeenCache && goingToOnboarding) return loggedIn ? '/home' : '/login';
+    if (onboardingSeenCache && goingToOnboarding)
+      return loggedIn ? '/home' : '/login';
     if (!loggedIn && !goingToAuth && !goingToOnboarding) return '/login';
     if (loggedIn && goingToAuth) return '/home';
     return null;
   },
   routes: [
-    GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+    GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
     GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     GoRoute(path: '/live', builder: (context, state) => const LiveScreen()),
     GoRoute(path: '/bible', builder: (context, state) => const BibleScreen()),
     GoRoute(path: '/learn', builder: (context, state) => const LearnScreen()),
-    GoRoute(path: '/ai', builder: (context, state) => const AiAssistantScreen()),
-    GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
+    GoRoute(
+        path: '/ai', builder: (context, state) => const AiAssistantScreen()),
+    GoRoute(
+        path: '/settings', builder: (context, state) => const SettingsScreen()),
     GoRoute(path: '/games', builder: (context, state) => const GamesScreen()),
-    GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
-    GoRoute(path: '/sermons', builder: (context, state) => const SermonLibraryScreen()),
-    GoRoute(path: '/downloads', builder: (context, state) => const DownloadsScreen()),
-    GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
-    GoRoute(path: '/bookmarks', builder: (context, state) => const BookmarksScreen()),
+    GoRoute(
+        path: '/profile', builder: (context, state) => const ProfileScreen()),
+    GoRoute(
+        path: '/sermons',
+        builder: (context, state) => const SermonLibraryScreen()),
+    GoRoute(
+        path: '/downloads',
+        builder: (context, state) => const DownloadsScreen()),
+    GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen()),
+    GoRoute(
+        path: '/bookmarks',
+        builder: (context, state) => const BookmarksScreen()),
     GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
   ],
 );

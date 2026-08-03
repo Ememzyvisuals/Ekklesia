@@ -38,7 +38,8 @@ class BookmarksScreen extends StatelessWidget {
   Future<void> _open(BuildContext context, BookmarkItem item) async {
     switch (item.type) {
       case BookmarkType.bible:
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BibleScreen()));
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const BibleScreen()));
         break;
       case BookmarkType.sermon:
         final result = await YoutubeRepository().getCachedUploads();
@@ -49,10 +50,13 @@ class BookmarksScreen extends StatelessWidget {
           }
         }
         if (match != null && context.mounted) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => VideoPlayerScreen(video: match!)));
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => VideoPlayerScreen(video: match!)));
         } else if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('This sermon is no longer in the cache — it may have been removed.')),
+            const SnackBar(
+                content: Text(
+                    'This sermon is no longer in the cache — it may have been removed.')),
           );
         }
         break;
@@ -67,9 +71,10 @@ class BookmarksScreen extends StatelessWidget {
     final uid = AuthService.instance.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.bookmarksTitle)),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).bookmarksTitle)),
       body: uid == null
-          ? Center(child: Text(AppLocalizations.of(context)!.bookmarksSignInPrompt))
+          ? Center(
+              child: Text(AppLocalizations.of(context).bookmarksSignInPrompt))
           : StreamBuilder<List<BookmarkItem>>(
               stream: BookmarkRepository.instance.watchAll(uid),
               builder: (context, snapshot) {
@@ -82,7 +87,7 @@ class BookmarksScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
-                        AppLocalizations.of(context)!.bookmarksEmpty,
+                        AppLocalizations.of(context).bookmarksEmpty,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: AppColors.textSecondary),
                       ),
@@ -95,14 +100,18 @@ class BookmarksScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = bookmarks[index];
                     return ListTile(
-                      leading: Icon(_iconFor(item.type), color: AppColors.accent),
-                      title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      leading:
+                          Icon(_iconFor(item.type), color: AppColors.accent),
+                      title: Text(item.title,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
                       subtitle: item.subtitle.isNotEmpty
-                          ? Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis)
+                          ? Text(item.subtitle,
+                              maxLines: 1, overflow: TextOverflow.ellipsis)
                           : null,
                       trailing: Text(
                         DateFormat('MMM d').format(item.createdAt),
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.textSecondary),
                       ),
                       onTap: () => _open(context, item),
                     );

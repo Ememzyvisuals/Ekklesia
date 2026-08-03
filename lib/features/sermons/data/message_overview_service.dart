@@ -13,15 +13,20 @@ import '../../../core/shared/result.dart';
 /// stated title/description, not a summary of its spoken content. The UI
 /// must label it that way rather than imply it's heard the sermon.
 class MessageOverview {
-  const MessageOverview({required this.topic, required this.summary, required this.pointsToConsider});
+  const MessageOverview(
+      {required this.topic,
+      required this.summary,
+      required this.pointsToConsider});
   final String topic;
   final String summary;
   final List<String> pointsToConsider;
 
-  factory MessageOverview.fromJson(Map<String, dynamic> json) => MessageOverview(
+  factory MessageOverview.fromJson(Map<String, dynamic> json) =>
+      MessageOverview(
         topic: json['topic'] as String? ?? '',
         summary: json['summary'] as String? ?? '',
-        pointsToConsider: (json['points_to_consider'] as List<dynamic>? ?? []).cast<String>(),
+        pointsToConsider:
+            (json['points_to_consider'] as List<dynamic>? ?? []).cast<String>(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -32,7 +37,8 @@ class MessageOverview {
 }
 
 class MessageOverviewService {
-  MessageOverviewService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
+  MessageOverviewService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -42,7 +48,8 @@ class MessageOverviewService {
     required String description,
   }) async {
     try {
-      final doc = await _firestore.collection('youtube_videos').doc(videoId).get();
+      final doc =
+          await _firestore.collection('youtube_videos').doc(videoId).get();
       final cached = doc.data()?['ai_overview'] as Map<String, dynamic>?;
       if (cached != null) {
         return Result.success(MessageOverview.fromJson(cached));
@@ -64,7 +71,8 @@ class MessageOverviewService {
     }
   }
 
-  Future<MessageOverview> _generate({required String title, required String description}) async {
+  Future<MessageOverview> _generate(
+      {required String title, required String description}) async {
     final prompt = '''
 You are helping a Christian app show a short, grounded overview of a sermon
 before someone watches it. You only have the title and description below —
@@ -80,11 +88,14 @@ Respond with ONLY this JSON object, no other text, no markdown fences:
 ''';
 
     final response = await GroqService.instance.chat([
-      GroqMessage(role: 'system', content: 'You output strictly valid JSON and nothing else.'),
+      GroqMessage(
+          role: 'system',
+          content: 'You output strictly valid JSON and nothing else.'),
       GroqMessage(role: 'user', content: prompt),
     ]);
 
-    final cleaned = response.replaceAll('```json', '').replaceAll('```', '').trim();
+    final cleaned =
+        response.replaceAll('```json', '').replaceAll('```', '').trim();
     final json = jsonDecode(cleaned) as Map<String, dynamic>;
     return MessageOverview.fromJson(json);
   }

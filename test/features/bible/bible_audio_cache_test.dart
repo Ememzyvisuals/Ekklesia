@@ -16,7 +16,8 @@ void main() {
       );
     });
 
-    test('is sensitive to whitespace/casing (exact-match cache key, not fuzzy)', () {
+    test('is sensitive to whitespace/casing (exact-match cache key, not fuzzy)',
+        () {
       expect(
         BibleAudioCache.hashFor('Hello World'),
         isNot(BibleAudioCache.hashFor('hello world')),

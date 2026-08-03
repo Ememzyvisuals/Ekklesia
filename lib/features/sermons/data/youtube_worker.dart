@@ -15,7 +15,8 @@ import 'youtube_repository.dart';
 /// someone has the app open, which covers the common case. Wiring true
 /// background refresh is a distinct follow-up.
 class YoutubeWorker {
-  YoutubeWorker({YoutubeRepository? repository}) : _repository = repository ?? YoutubeRepository();
+  YoutubeWorker({YoutubeRepository? repository})
+      : _repository = repository ?? YoutubeRepository();
 
   final YoutubeRepository _repository;
   Timer? _timer;

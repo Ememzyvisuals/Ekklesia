@@ -24,9 +24,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit bio'),
-        content: TextField(controller: controller, maxLines: 3, autofocus: true),
+        content:
+            TextField(controller: controller, maxLines: 3, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
             child: const Text('Save'),
@@ -40,7 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _editAvatar(UserProfile profile) async {
-    final gender = profile.gender == 'female' ? AvatarGender.female : AvatarGender.male;
+    final gender =
+        profile.gender == 'female' ? AvatarGender.female : AvatarGender.male;
     String? picked = profile.avatarId;
     await showModalBottomSheet(
       context: context,
@@ -81,14 +85,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () => _editAvatar(profile),
                   child: Stack(
                     children: [
-                      AvatarView(avatarId: profile.avatarId, photoUrl: profile.photoUrl, size: 96),
+                      AvatarView(
+                          avatarId: profile.avatarId,
+                          photoUrl: profile.photoUrl,
+                          size: 96),
                       Positioned(
                         bottom: 0,
                         right: 0,
                         child: Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                          child: const Icon(Icons.edit, size: 16, color: Colors.white),
+                          decoration: const BoxDecoration(
+                              color: AppColors.accent, shape: BoxShape.circle),
+                          child: const Icon(Icons.edit,
+                              size: 16, color: Colors.white),
                         ),
                       ),
                     ],
@@ -98,16 +107,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               Center(
                 child: Text(profile.displayName,
-                    style: AppTypography.titleLarge(color: AppTheme.textPrimary(context))),
+                    style: AppTypography.titleLarge(
+                        color: AppTheme.textPrimary(context))),
               ),
               Center(
                 child: Text(profile.email,
-                    style: AppTypography.bodyMedium(color: AppTheme.textSecondary(context))),
+                    style: AppTypography.bodyMedium(
+                        color: AppTheme.textSecondary(context))),
               ),
               const SizedBox(height: 24),
               ListTile(
                 title: const Text('Bio'),
-                subtitle: Text(profile.bio.isEmpty ? 'Add a short bio' : profile.bio),
+                subtitle:
+                    Text(profile.bio.isEmpty ? 'Add a short bio' : profile.bio),
                 trailing: const Icon(Icons.edit_outlined),
                 onTap: () => _editBio(profile),
               ),

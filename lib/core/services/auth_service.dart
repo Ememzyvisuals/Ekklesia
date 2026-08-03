@@ -26,7 +26,8 @@ class AuthService {
   /// against Google's public JWKS itself, since it isn't a Firebase
   /// callable and doesn't get `request.auth` for free the way Cloud
   /// Functions callables do. Returns null if nobody's signed in.
-  Future<String?> getIdToken() => _auth.currentUser?.getIdToken() ?? Future.value(null);
+  Future<String?> getIdToken() =>
+      _auth.currentUser?.getIdToken() ?? Future.value(null);
 
   /// [gender], [ageRange], and [preferredLanguage] are required per the
   /// spec's Authentication section. [bio] and [photoUrl] are optional. If
@@ -60,7 +61,10 @@ class AuthService {
                 .pickDefault(gender: gender, seed: credential.user!.uid)
                 .id);
 
-    await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(credential.user!.uid)
+        .set({
       'uid': credential.user!.uid,
       'email': email,
       'display_name': displayName,
@@ -87,9 +91,14 @@ class AuthService {
     return credential;
   }
 
-  Future<UserCredential> signIn({required String email, required String password}) async {
-    final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
-    await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).update({
+  Future<UserCredential> signIn(
+      {required String email, required String password}) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+        email: email, password: password);
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(credential.user!.uid)
+        .update({
       'last_login': FieldValue.serverTimestamp(),
     });
     unawaited(AIConfig.instance.verify());
@@ -98,5 +107,6 @@ class AuthService {
 
   Future<void> signOut() => _auth.signOut();
 
-  Future<void> sendPasswordReset(String email) => _auth.sendPasswordResetEmail(email: email);
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordResetEmail(email: email);
 }

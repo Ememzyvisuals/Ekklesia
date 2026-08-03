@@ -28,10 +28,24 @@ class CleanupWorker {
   /// every step is independently no-op if there's nothing to clean.
   Future<void> runOnce({required String uid}) async {
     await Future.wait([
-      _pruneOldDocs(collection: 'notifications', field: 'uid', value: uid, maxAge: _maxNotificationAge, dateField: 'created_at'),
-      _pruneOldDocs(collection: AppConfig.workerLogsCollection, maxAge: _maxLogAge, dateField: 'created_at'),
-      _pruneOldDocs(collection: AppConfig.syncLogsCollection, maxAge: _maxLogAge, dateField: 'created_at'),
-      _pruneOldDocs(collection: AppConfig.downloadLogsCollection, maxAge: _maxLogAge, dateField: 'created_at'),
+      _pruneOldDocs(
+          collection: 'notifications',
+          field: 'uid',
+          value: uid,
+          maxAge: _maxNotificationAge,
+          dateField: 'created_at'),
+      _pruneOldDocs(
+          collection: AppConfig.workerLogsCollection,
+          maxAge: _maxLogAge,
+          dateField: 'created_at'),
+      _pruneOldDocs(
+          collection: AppConfig.syncLogsCollection,
+          maxAge: _maxLogAge,
+          dateField: 'created_at'),
+      _pruneOldDocs(
+          collection: AppConfig.downloadLogsCollection,
+          maxAge: _maxLogAge,
+          dateField: 'created_at'),
       _pruneOrphanedTempFiles(),
       _pruneOrphanedBibleAudio(),
     ]);
@@ -58,11 +72,15 @@ class CleanupWorker {
   }) async {
     try {
       final cutoff = Timestamp.fromDate(DateTime.now().subtract(maxAge));
-      Query query = FirebaseFirestore.instance.collection(collection).where(dateField, isLessThan: cutoff);
+      Query query = FirebaseFirestore.instance
+          .collection(collection)
+          .where(dateField, isLessThan: cutoff);
       if (field != null && value != null) {
         query = query.where(field, isEqualTo: value);
       }
-      final snapshot = await query.limit(200).get(); // capped per pass — repeated runs finish the job without one huge batch
+      final snapshot = await query
+          .limit(200)
+          .get(); // capped per pass — repeated runs finish the job without one huge batch
       if (snapshot.docs.isEmpty) return;
 
       final batch = FirebaseFirestore.instance.batch();

@@ -89,21 +89,35 @@ class BibleImporter {
     }
 
     final sw = Stopwatch()..start();
-    var bookCount = 0, chapterCount = 0, verseCount = 0, approxCount = 0, omittedCount = 0;
+    var bookCount = 0,
+        chapterCount = 0,
+        verseCount = 0,
+        approxCount = 0,
+        omittedCount = 0;
 
     await isar.writeTxn(() async {
       // Re-imports replace the previous copy of this language cleanly —
       // no duplicate rows if the user re-runs import.
-      await isar.bibleBookEntitys.filter().languageEqualTo(language).deleteAll();
-      await isar.bibleChapterEntitys.filter().languageEqualTo(language).deleteAll();
-      await isar.bibleVerseEntitys.filter().languageEqualTo(language).deleteAll();
+      await isar.bibleBookEntitys
+          .filter()
+          .languageEqualTo(language)
+          .deleteAll();
+      await isar.bibleChapterEntitys
+          .filter()
+          .languageEqualTo(language)
+          .deleteAll();
+      await isar.bibleVerseEntitys
+          .filter()
+          .languageEqualTo(language)
+          .deleteAll();
 
       for (final rawBook in books) {
         final book = rawBook as Map<String, dynamic>;
         final code = book['code'] as String;
         final chapters = book['chapters'] as List<dynamic>? ?? [];
         if (chapters.isEmpty) {
-          throw BibleImportException('Book $code has zero chapters in "$language" — aborting import.');
+          throw BibleImportException(
+              'Book $code has zero chapters in "$language" — aborting import.');
         }
 
         await isar.bibleBookEntitys.put(
@@ -188,12 +202,17 @@ class BibleImporter {
   }
 
   Future<bool> isImported(String language) async {
-    final record = await isar.bibleImportRecordEntitys.filter().languageEqualTo(language).findFirst();
+    final record = await isar.bibleImportRecordEntitys
+        .filter()
+        .languageEqualTo(language)
+        .findFirst();
     return record != null && record.booksImported == 66;
   }
 
   static String _normalize(String? text) {
     if (text == null) return '';
-    return text.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '');
+    return text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '');
   }
 }

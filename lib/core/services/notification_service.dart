@@ -43,7 +43,8 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.denied) {
-      _initializedForUid = uid; // still mark as handled — don't nag or retry immediately
+      _initializedForUid =
+          uid; // still mark as handled — don't nag or retry immediately
       return;
     }
 
@@ -52,8 +53,10 @@ class NotificationService {
       await _saveTokenToUser(uid, token);
     }
 
-    _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) => _saveTokenToUser(uid, newToken));
-    _onMessageSub = FirebaseMessaging.onMessage.listen((message) => _recordNotification(uid, message));
+    _tokenRefreshSub = _messaging.onTokenRefresh
+        .listen((newToken) => _saveTokenToUser(uid, newToken));
+    _onMessageSub = FirebaseMessaging.onMessage
+        .listen((message) => _recordNotification(uid, message));
 
     _initializedForUid = uid;
   }

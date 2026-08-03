@@ -44,7 +44,8 @@ class TtsGenerationException implements Exception {
   final int attemptsMade;
 
   @override
-  String toString() => 'TtsGenerationException(${type.name}, after $attemptsMade attempts): $message';
+  String toString() =>
+      'TtsGenerationException(${type.name}, after $attemptsMade attempts): $message';
 }
 
 /// Routes text-to-speech requests to the correct engine per language:
@@ -64,7 +65,8 @@ class TtsService {
   TtsService._internal();
   static final TtsService instance = TtsService._internal();
 
-  final GradioClient _wazobiaClient = GradioClient(AppConfig.wazobiaVoiceSpaceUrl);
+  final GradioClient _wazobiaClient =
+      GradioClient(AppConfig.wazobiaVoiceSpaceUrl);
   final GradioClient _yarnGptClient = GradioClient(AppConfig.yarnGptSpaceUrl);
 
   static const _maxAttempts = 3;
@@ -88,7 +90,8 @@ class TtsService {
     required String text,
     required EkklesiaLanguage language,
   }) async {
-    final source = language == EkklesiaLanguage.yoruba ? 'yarnGpt' : 'wazobiaVoice';
+    final source =
+        language == EkklesiaLanguage.yoruba ? 'yarnGpt' : 'wazobiaVoice';
     Object? lastError;
 
     for (var attempt = 1; attempt <= _maxAttempts; attempt++) {
@@ -107,7 +110,8 @@ class TtsService {
             attemptsMade: attempt,
             message: e.message,
           );
-          throw TtsGenerationException(e.type, e.message, attemptsMade: attempt);
+          throw TtsGenerationException(e.type, e.message,
+              attemptsMade: attempt);
         }
         await TtsErrorLogger.instance.logRetry(
           source: source,
@@ -140,7 +144,8 @@ class TtsService {
     };
     final jitterMs = Random().nextInt(500);
     return Duration(
-      milliseconds: _baseBackoff.inMilliseconds * attempt * multiplier + jitterMs,
+      milliseconds:
+          _baseBackoff.inMilliseconds * attempt * multiplier + jitterMs,
     );
   }
 
@@ -171,7 +176,8 @@ class TtsService {
   /// whitespace, so a chunk never cuts off mid-word or mid-sentence if it
   /// can be avoided. Pure text operation, no network — exposed publicly
   /// so [BibleTTSQueue] can plan its prefetch schedule up front.
-  List<String> chunkText(String text) => _splitIntoChunks(text, AppConfig.wazobiaVoiceMaxChars);
+  List<String> chunkText(String text) =>
+      _splitIntoChunks(text, AppConfig.wazobiaVoiceMaxChars);
 
   List<String> _splitIntoChunks(String text, int maxChars) {
     final trimmed = text.trim();
@@ -224,10 +230,12 @@ class TtsService {
     return chunks;
   }
 
-  Future<TtsResult> _synthesizeWazobia(String text, EkklesiaLanguage language) async {
+  Future<TtsResult> _synthesizeWazobia(
+      String text, EkklesiaLanguage language) async {
     final persona = AppConfig.wazobiaVoicePersonaByLanguage[language.code];
     if (persona == null) {
-      throw Exception('No WazobiaVoice persona configured for ${language.code}');
+      throw Exception(
+          'No WazobiaVoice persona configured for ${language.code}');
     }
 
     // Confirmed order from the real Space API docs:

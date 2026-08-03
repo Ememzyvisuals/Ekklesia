@@ -11,7 +11,6 @@ import '../../../core/services/audio_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../bookmarks/presentation/bookmark_button.dart';
 import '../../bookmarks/domain/bookmark_item.dart';
-import '../data/bible_annotations_repository.dart';
 import '../data/bible_annotations_schema.dart';
 import '../data/bible_audio_cache.dart';
 import '../data/bible_local_schema.dart';
@@ -81,8 +80,10 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
     try {
       final repo = ref.read(bibleRepositoryProvider);
       final annotations = ref.read(bibleAnnotationsRepositoryProvider);
-      final verses = await repo.getVerses(_bibleLanguage, book.code, chapterNumber);
-      final highlights = await annotations.getHighlightsForChapter(_bibleLanguage, book.code, chapterNumber);
+      final verses =
+          await repo.getVerses(_bibleLanguage, book.code, chapterNumber);
+      final highlights = await annotations.getHighlightsForChapter(
+          _bibleLanguage, book.code, chapterNumber);
       setState(() {
         _selectedBook = book;
         _selectedChapter = chapterNumber;
@@ -151,12 +152,14 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
   }
 
   Future<void> _listenToChapter() async {
-    if (_verses.isEmpty || _selectedBook == null || _selectedChapter == null) return;
+    if (_verses.isEmpty || _selectedBook == null || _selectedChapter == null)
+      return;
     final bibleLanguage = ref.read(bibleLanguageProvider);
     final book = _selectedBook!;
     final chapterNumber = _selectedChapter!;
     final ekklesiaLanguage = _ekklesiaLanguageFor(bibleLanguage);
-    final fullText = _verses.map((v) => v.text ?? '').where((t) => t.isNotEmpty).join(' ');
+    final fullText =
+        _verses.map((v) => v.text ?? '').where((t) => t.isNotEmpty).join(' ');
     final contentHash = BibleAudioCache.hashFor(fullText);
     final cache = ref.read(bibleAudioCacheProvider);
 
@@ -166,7 +169,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
       _error = null;
     });
     _queueProgressSub?.cancel();
-    _queueProgressSub = AudioService.instance.queueProgressStream.listen((progress) {
+    _queueProgressSub =
+        AudioService.instance.queueProgressStream.listen((progress) {
       if (!mounted) return;
       setState(() {
         _queueProgressLabel =
@@ -177,10 +181,14 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
     try {
       // Already generated and downloaded for this exact chapter text? Play
       // straight from disk — no TTS Space call, no wait, no quota spent.
-      final cached = await cache.get(bibleLanguage, book.code, chapterNumber, contentHash);
+      final cached =
+          await cache.get(bibleLanguage, book.code, chapterNumber, contentHash);
       if (cached != null) {
         final items = Stream.fromIterable(
-          cached.chunkPaths.map((p) => (Uri.file(p).toString(), cache.sourceFor(cached.audioSourceName))),
+          cached.chunkPaths.map((p) => (
+                Uri.file(p).toString(),
+                cache.sourceFor(cached.audioSourceName)
+              )),
         );
         await AudioService.instance.playQueue(items);
         return;
@@ -193,7 +201,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
       // to disk for next time once playback finishes.
       final generated = <TtsResult>[];
       Stream<(String, AudioSource)> instrumented() async* {
-        final chunks = BibleTTSQueue().stream(text: fullText, language: ekklesiaLanguage);
+        final chunks =
+            BibleTTSQueue().stream(text: fullText, language: ekklesiaLanguage);
         await for (final result in chunks) {
           generated.add(result);
           yield (result.audioUrl, result.source);
@@ -274,7 +283,7 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
     final refText = '${_selectedBook?.name ?? ''} ${v.chapter}:${v.number}';
     Clipboard.setData(ClipboardData(text: '$refText — ${v.text}'));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.bibleVerseCopied)),
+      SnackBar(content: Text(AppLocalizations.of(context).bibleVerseCopied)),
     );
   }
 
@@ -288,7 +297,7 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final bibleLanguage = ref.watch(bibleLanguageProvider);
     final importStatus = ref.watch(bibleImportStatusProvider(bibleLanguage));
 
@@ -303,7 +312,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                   key: const ValueKey('back'),
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
                   onPressed: () => setState(() {
-                    _view = _view == _View.verses ? _View.chapters : _View.books;
+                    _view =
+                        _view == _View.verses ? _View.chapters : _View.books;
                   }),
                 ),
         ),
@@ -314,7 +324,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
               borderRadius: BorderRadius.circular(12),
               dropdownColor: AppColors.surface,
               items: kBibleCodeLabel.entries
-                  .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                  .map((e) =>
+                      DropdownMenuItem(value: e.key, child: Text(e.value)))
                   .toList(),
               onChanged: (code) {
                 if (code == null) return;
@@ -333,7 +344,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
       ),
       body: importStatus.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('${l10n.bibleErrorCheckingImport}: $e')),
+        error: (e, _) =>
+            Center(child: Text('${l10n.bibleErrorCheckingImport}: $e')),
         data: (imported) {
           return AnimatedSwitcher(
             duration: _transitionDuration,
@@ -353,7 +365,7 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
   }
 
   Widget _buildImportGate(String bibleLanguage, {Key? key}) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Center(
       key: key,
       child: Padding(
@@ -361,10 +373,12 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.menu_book_outlined, size: 48, color: AppColors.textSecondary),
+            Icon(Icons.menu_book_outlined,
+                size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 16),
             Text(
-              l10n.bibleImportPrompt(kBibleCodeLabel[bibleLanguage] ?? bibleLanguage),
+              l10n.bibleImportPrompt(
+                  kBibleCodeLabel[bibleLanguage] ?? bibleLanguage),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               textAlign: TextAlign.center,
             ),
@@ -382,12 +396,14 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                       await importer.importLanguage(bibleLanguage);
                       ref.invalidate(bibleImportStatusProvider(bibleLanguage));
                       if (!context.mounted) return;
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text(l10n.bibleImportSuccess)));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.bibleImportSuccess)));
                     } catch (e) {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${l10n.bibleImportFailedPrefix}: $e')),
+                        SnackBar(
+                            content:
+                                Text('${l10n.bibleImportFailedPrefix}: $e')),
                       );
                     }
                   },
@@ -401,7 +417,7 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
   }
 
   Widget _buildReader(String bibleLanguage, {Key? key}) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Column(
       key: key,
       children: [
@@ -420,7 +436,9 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                   onSubmitted: (_) => _jumpToReference(),
                 ),
               ),
-              IconButton(icon: const Icon(Icons.search_rounded), onPressed: _jumpToReference),
+              IconButton(
+                  icon: const Icon(Icons.search_rounded),
+                  onPressed: _jumpToReference),
             ],
           ),
         ),
@@ -439,7 +457,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                         key: ValueKey('spinner'),
                         padding: EdgeInsets.all(10),
                         child: SizedBox(
-                          height: 16, width: 16,
+                          height: 16,
+                          width: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       )
@@ -454,7 +473,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
           child: _error != null
               ? Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                  child:
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
                 )
               : const SizedBox(width: double.infinity),
         ),
@@ -467,7 +487,7 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
   }
 
   Widget _buildSearchResults(String bibleLanguage) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     if (_searchResults.isEmpty) {
       return Center(child: Text(l10n.bibleNoMatches));
     }
@@ -477,7 +497,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
         final v = _searchResults[i];
         return ListTile(
           title: Text('${v.bookCode} ${v.chapter}:${v.number}'),
-          subtitle: Text(v.text ?? '', maxLines: 2, overflow: TextOverflow.ellipsis),
+          subtitle:
+              Text(v.text ?? '', maxLines: 2, overflow: TextOverflow.ellipsis),
           onTap: () async {
             final repo = ref.read(bibleRepositoryProvider);
             final books = await repo.getBooks(bibleLanguage);
@@ -493,7 +514,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
   Future<void> _continueReading(String bookCode, int chapter) async {
     final repo = ref.read(bibleRepositoryProvider);
     final books = await repo.getBooks(_bibleLanguage);
-    final book = books.firstWhere((b) => b.code == bookCode, orElse: () => books.first);
+    final book =
+        books.firstWhere((b) => b.code == bookCode, orElse: () => books.first);
     await _openChapter(book, chapter);
   }
 
@@ -538,17 +560,22 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
-        final offset = Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero).animate(animation);
-        return FadeTransition(opacity: animation, child: SlideTransition(position: offset, child: child));
+        final offset =
+            Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero)
+                .animate(animation);
+        return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(position: offset, child: child));
       },
       child: child,
     );
   }
 
   Widget _buildVerseList() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     if (_loadingVerses) return const Center(child: CircularProgressIndicator());
-    if (_selectedBook == null || _selectedChapter == null) return const SizedBox.shrink();
+    if (_selectedBook == null || _selectedChapter == null)
+      return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -559,7 +586,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
               Expanded(
                 child: Text(
                   '${_selectedBook!.name} $_selectedChapter',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ),
               ElevatedButton.icon(
@@ -569,12 +597,17 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                   child: _loadingAudio
                       ? const SizedBox(
                           key: ValueKey('spinner'),
-                          height: 16, width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
-                      : const Icon(Icons.volume_up_rounded, key: ValueKey('icon')),
+                      : const Icon(Icons.volume_up_rounded,
+                          key: ValueKey('icon')),
                 ),
-                label: Text(_loadingAudio ? (_queueProgressLabel ?? l10n.bibleGenerating) : l10n.bibleListen),
+                label: Text(_loadingAudio
+                    ? (_queueProgressLabel ?? l10n.bibleGenerating)
+                    : l10n.bibleListen),
               ),
             ],
           ),
@@ -590,12 +623,15 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(
                     '${v.number}. [${l10n.bibleNotIncluded}]',
-                    style: TextStyle(color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                    style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontStyle: FontStyle.italic),
                   ),
                 );
               }
               final highlightColor = _highlights[v.number] != null
-                  ? _colorFromHex(_highlights[v.number]!.colorHex).withOpacity(0.35)
+                  ? _colorFromHex(_highlights[v.number]!.colorHex)
+                      .withValues(alpha: 0.35)
                   : Colors.transparent;
               return InkWell(
                 onLongPress: () => _showVerseActions(v),
@@ -616,7 +652,8 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                         if (v.approximate)
                           TextSpan(
                             text: '  (${l10n.bibleApproxNumbering})',
-                            style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic),
+                            style: const TextStyle(
+                                fontSize: 11, fontStyle: FontStyle.italic),
                           ),
                       ],
                     ),
@@ -631,7 +668,7 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
   }
 
   void _showVerseActions(BibleVerseEntity v) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final refLabel = '${_selectedBook?.name ?? ''} ${v.chapter}:${v.number}';
     final isHighlighted = _highlights[v.number] != null;
     showModalBottomSheet(
@@ -663,7 +700,9 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
             ListTile(
               leading: Icon(
                 Icons.brush_rounded,
-                color: isHighlighted ? _colorFromHex(_highlights[v.number]!.colorHex) : null,
+                color: isHighlighted
+                    ? _colorFromHex(_highlights[v.number]!.colorHex)
+                    : null,
               ),
               title: Text(l10n.bibleHighlight),
               subtitle: Text(l10n.bibleHighlightHint),
@@ -673,24 +712,35 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
               child: Wrap(
                 spacing: 12,
                 children: _highlightPalette.entries.map((entry) {
-                  final selected = isHighlighted && _highlights[v.number]!.colorHex == _hexOf(entry.value);
+                  final selected = isHighlighted &&
+                      _highlights[v.number]!.colorHex == _hexOf(entry.value);
                   return GestureDetector(
                     onTap: () async {
                       Navigator.pop(context);
-                      final annotations = ref.read(bibleAnnotationsRepositoryProvider);
+                      final annotations =
+                          ref.read(bibleAnnotationsRepositoryProvider);
                       if (selected) {
                         await annotations.removeHighlight(
-                          language: _bibleLanguage, bookCode: v.bookCode, chapter: v.chapter, verseNumber: v.number,
+                          language: _bibleLanguage,
+                          bookCode: v.bookCode,
+                          chapter: v.chapter,
+                          verseNumber: v.number,
                         );
                       } else {
                         await annotations.setHighlight(
-                          language: _bibleLanguage, bookCode: v.bookCode, chapter: v.chapter,
-                          verseNumber: v.number, colorHex: _hexOf(entry.value),
+                          language: _bibleLanguage,
+                          bookCode: v.bookCode,
+                          chapter: v.chapter,
+                          verseNumber: v.number,
+                          colorHex: _hexOf(entry.value),
                         );
                       }
                       if (_selectedBook != null && _selectedChapter != null) {
-                        final refreshed = await annotations.getHighlightsForChapter(
-                          _bibleLanguage, _selectedBook!.code, _selectedChapter!,
+                        final refreshed =
+                            await annotations.getHighlightsForChapter(
+                          _bibleLanguage,
+                          _selectedBook!.code,
+                          _selectedChapter!,
                         );
                         if (mounted) setState(() => _highlights = refreshed);
                       }
@@ -703,9 +753,14 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
                       decoration: BoxDecoration(
                         color: entry.value,
                         shape: BoxShape.circle,
-                        border: selected ? Border.all(color: Colors.black87, width: 2) : null,
+                        border: selected
+                            ? Border.all(color: Colors.black87, width: 2)
+                            : null,
                       ),
-                      child: selected ? const Icon(Icons.check_rounded, size: 16, color: Colors.black87) : null,
+                      child: selected
+                          ? const Icon(Icons.check_rounded,
+                              size: 16, color: Colors.black87)
+                          : null,
                     ),
                   );
                 }).toList(),
@@ -726,25 +781,31 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
     );
   }
 
-  String _hexOf(Color c) => c.value.toRadixString(16).toUpperCase().padLeft(8, '0');
+  String _hexOf(Color c) =>
+      c.toARGB32().toRadixString(16).toUpperCase().padLeft(8, '0');
 
   Future<void> _editNote(BibleVerseEntity v) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final annotations = ref.read(bibleAnnotationsRepositoryProvider);
     final existing = await annotations.getNote(
-      language: _bibleLanguage, bookCode: v.bookCode, chapter: v.chapter, verseNumber: v.number,
+      language: _bibleLanguage,
+      bookCode: v.bookCode,
+      chapter: v.chapter,
+      verseNumber: v.number,
     );
     final controller = TextEditingController(text: existing?.text ?? '');
     if (!mounted) return;
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${l10n.bibleNote} — ${_selectedBook?.name ?? ''} ${v.chapter}:${v.number}'),
+        title: Text(
+            '${l10n.bibleNote} — ${_selectedBook?.name ?? ''} ${v.chapter}:${v.number}'),
         content: TextField(
           controller: controller,
           maxLines: 5,
           autofocus: true,
-          decoration: InputDecoration(hintText: l10n.bibleNoteHint, border: const OutlineInputBorder()),
+          decoration: InputDecoration(
+              hintText: l10n.bibleNoteHint, border: const OutlineInputBorder()),
         ),
         actions: [
           if (existing != null)
@@ -752,33 +813,46 @@ class _BibleScreenState extends ConsumerState<BibleScreen> {
               onPressed: () => Navigator.pop(context, ''),
               child: Text(l10n.commonDelete),
             ),
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonCancel)),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text), child: Text(l10n.commonSave)),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.commonCancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: Text(l10n.commonSave)),
         ],
       ),
     );
     if (result == null) return;
     await annotations.setNote(
-      language: _bibleLanguage, bookCode: v.bookCode, chapter: v.chapter, verseNumber: v.number, text: result,
+      language: _bibleLanguage,
+      bookCode: v.bookCode,
+      chapter: v.chapter,
+      verseNumber: v.number,
+      text: result,
     );
   }
 }
 
 class _BookList extends ConsumerWidget {
-  const _BookList({super.key, required this.bibleLanguage, required this.onSelect, this.onContinueReading});
+  const _BookList(
+      {super.key,
+      required this.bibleLanguage,
+      required this.onSelect,
+      this.onContinueReading});
   final String bibleLanguage;
   final void Function(BibleBookEntity) onSelect;
   final Future<void> Function(String bookCode, int chapter)? onContinueReading;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final repo = ref.watch(bibleRepositoryProvider);
     final annotations = ref.watch(bibleAnnotationsRepositoryProvider);
     return FutureBuilder<List<BibleBookEntity>>(
       future: repo.getBooks(bibleLanguage),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
         final books = snapshot.data!;
         final ot = books.where((b) => b.testament == 'OT').toList();
         final nt = books.where((b) => b.testament == 'NT').toList();
@@ -791,7 +865,8 @@ class _BookList extends ConsumerWidget {
                 final show = streak != null && streak.currentStreak > 0;
                 return AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
-                  transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                  transitionBuilder: (child, anim) =>
+                      FadeTransition(opacity: anim, child: child),
                   child: !show
                       ? const SizedBox.shrink(key: ValueKey('no-streak'))
                       : Padding(
@@ -799,14 +874,16 @@ class _BookList extends ConsumerWidget {
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                           child: Row(
                             children: [
-                              const Icon(Icons.local_fire_department_rounded, color: Colors.deepOrange, size: 20),
+                              const Icon(Icons.local_fire_department_rounded,
+                                  color: Colors.deepOrange, size: 20),
                               const SizedBox(width: 6),
                               Text(
-                                l10n.bibleStreakDays(streak!.currentStreak) +
+                                l10n.bibleStreakDays(streak.currentStreak) +
                                     (streak.longestStreak > streak.currentStreak
                                         ? ' (${l10n.bibleStreakBest(streak.longestStreak)})'
                                         : ''),
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -821,7 +898,8 @@ class _BookList extends ConsumerWidget {
                   final progress = progressSnapshot.data;
                   return AnimatedSwitcher(
                     duration: const Duration(milliseconds: 220),
-                    transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                    transitionBuilder: (child, anim) =>
+                        FadeTransition(opacity: anim, child: child),
                     child: progress == null
                         ? const SizedBox.shrink(key: ValueKey('no-progress'))
                         : Card(
@@ -830,18 +908,22 @@ class _BookList extends ConsumerWidget {
                             child: ListTile(
                               leading: const Icon(Icons.menu_book_rounded),
                               title: Text(l10n.bibleContinueReading),
-                              subtitle: Text('${progress.bookName} ${progress.chapter}'),
+                              subtitle: Text(
+                                  '${progress.bookName} ${progress.chapter}'),
                               trailing: const Icon(Icons.chevron_right_rounded),
-                              onTap: () => onContinueReading!(progress.bookCode, progress.chapter),
+                              onTap: () => onContinueReading!(
+                                  progress.bookCode, progress.chapter),
                             ),
                           ),
                   );
                 },
               ),
             _sectionHeader(l10n.bibleOldTestament),
-            ...ot.map((b) => ListTile(title: Text(b.name), onTap: () => onSelect(b))),
+            ...ot.map(
+                (b) => ListTile(title: Text(b.name), onTap: () => onSelect(b))),
             _sectionHeader(l10n.bibleNewTestament),
-            ...nt.map((b) => ListTile(title: Text(b.name), onTap: () => onSelect(b))),
+            ...nt.map(
+                (b) => ListTile(title: Text(b.name), onTap: () => onSelect(b))),
           ],
         );
       },
@@ -850,7 +932,9 @@ class _BookList extends ConsumerWidget {
 
   Widget _sectionHeader(String label) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+        child: Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.grey)),
       );
 }
 
@@ -873,7 +957,8 @@ class _ChapterGrid extends StatelessWidget {
         final chapterNumber = i + 1;
         return OutlinedButton(
           style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           onPressed: () => onSelect(chapterNumber),
           child: Text('$chapterNumber'),

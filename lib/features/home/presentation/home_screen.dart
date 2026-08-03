@@ -52,11 +52,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.appTitle),
+        title: Text(AppLocalizations.of(context).appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            tooltip: AppLocalizations.of(context)!.commonSearch,
+            tooltip: AppLocalizations.of(context).commonSearch,
             onPressed: () => context.push('/search'),
           ),
         ],
@@ -74,7 +74,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 16),
             _DailyContentCard(
               icon: Icons.menu_book,
-              label: AppLocalizations.of(context)!.homeTodaysVerse,
+              label: AppLocalizations.of(context).homeTodaysVerse,
               future: _verseFuture,
               textBuilder: (data) => data['reference'] as String? ?? '',
               onTap: () => context.go('/bible'),
@@ -82,14 +82,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 12),
             _DailyContentCard(
               icon: Icons.favorite_outline,
-              label: AppLocalizations.of(context)!.homeTodaysPrayer,
+              label: AppLocalizations.of(context).homeTodaysPrayer,
               future: _prayerFuture,
               textBuilder: (data) => data['text'] as String? ?? '',
               maxLines: 3,
               onTap: () => context.go('/ai'),
             ),
             const SizedBox(height: 24),
-            Text(AppLocalizations.of(context)!.homeCategories, style: Theme.of(context).textTheme.headlineMedium),
+            Text(AppLocalizations.of(context).homeCategories,
+                style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 12),
             GridView.count(
               crossAxisCount: 2,
@@ -147,7 +148,7 @@ class _FeaturedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final featured = snapshot?.featured;
     final isLive = featured?.liveStatus == LiveStatus.live;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     String title;
     String subtitle;
@@ -169,12 +170,14 @@ class _FeaturedCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primary]),
+          gradient: const LinearGradient(
+              colors: [AppColors.primary, AppColors.primary]),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
-            Icon(isLive ? Icons.live_tv : Icons.radio, color: Colors.white, size: 32),
+            Icon(isLive ? Icons.live_tv : Icons.radio,
+                color: Colors.white, size: 32),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -184,7 +187,8 @@ class _FeaturedCard extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     subtitle,
@@ -233,7 +237,7 @@ class _DailyContentCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+          border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
         ),
         child: FutureBuilder<Map<String, dynamic>>(
           future: future,
@@ -247,15 +251,21 @@ class _DailyContentCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(label,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 4),
                       if (snapshot.connectionState == ConnectionState.waiting)
                         const SizedBox(
-                          height: 14, width: 14,
+                          height: 14,
+                          width: 14,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       else if (snapshot.hasError || !snapshot.hasData)
-                        Text(AppLocalizations.of(context)!.homeUnavailableOffline, style: const TextStyle(color: AppColors.textSecondary))
+                        Text(
+                            AppLocalizations.of(context).homeUnavailableOffline,
+                            style:
+                                const TextStyle(color: AppColors.textSecondary))
                       else
                         Text(
                           textBuilder(snapshot.data!),
@@ -286,7 +296,7 @@ class _CategoryTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

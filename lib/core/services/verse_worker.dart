@@ -27,17 +27,20 @@ class VerseWorker {
   static const _cacheKey = 'cached_daily_verse';
   static const _cacheDateKey = 'cached_daily_verse_date';
 
-  final _collection = FirebaseFirestore.instance.collection(AppConfig.dailyVerseCollection);
+  final _collection =
+      FirebaseFirestore.instance.collection(AppConfig.dailyVerseCollection);
 
   /// Returns today's verse: cache -> Firestore -> generate-and-write ->
   /// last-resort local fallback if fully offline with no prior cache.
-  Future<Map<String, dynamic>> getTodaysVerse({required String language}) async {
+  Future<Map<String, dynamic>> getTodaysVerse(
+      {required String language}) async {
     final today = _todayKey();
     final prefs = await SharedPreferences.getInstance();
 
     if (prefs.getString(_cacheDateKey) == today) {
       final cached = prefs.getString(_cacheKey);
-      if (cached != null) return {'reference': cached, 'language': language, 'source': 'cache'};
+      if (cached != null)
+        return {'reference': cached, 'language': language, 'source': 'cache'};
     }
 
     try {
@@ -45,7 +48,11 @@ class VerseWorker {
       if (doc.exists && doc.data() != null) {
         final reference = doc.data()!['reference'] as String;
         await _cacheLocally(today, reference);
-        return {'reference': reference, 'language': language, 'source': 'firestore'};
+        return {
+          'reference': reference,
+          'language': language,
+          'source': 'firestore'
+        };
       }
       return await _generateAndStore(today, language);
     } catch (_) {
@@ -53,11 +60,16 @@ class VerseWorker {
       // fallback list so at least every device shows the same verse.
       final fallback = AppConfig.verseFallbackReferences[
           DateTime.now().day % AppConfig.verseFallbackReferences.length];
-      return {'reference': fallback, 'language': language, 'source': 'offline_fallback'};
+      return {
+        'reference': fallback,
+        'language': language,
+        'source': 'offline_fallback'
+      };
     }
   }
 
-  Future<Map<String, dynamic>> _generateAndStore(String dateKey, String language) async {
+  Future<Map<String, dynamic>> _generateAndStore(
+      String dateKey, String language) async {
     final random = Random(dateKey.hashCode);
     final reference = AppConfig.verseFallbackReferences[
         random.nextInt(AppConfig.verseFallbackReferences.length)];
@@ -71,7 +83,8 @@ class VerseWorker {
       // at first launch).
       final repo = BibleRepository(IsarService.instance.isar);
       final verses = await repo.getPassage(reference, language: 'en');
-      final text = verses.map((v) => v.text ?? '').where((t) => t.isNotEmpty).join(' ');
+      final text =
+          verses.map((v) => v.text ?? '').where((t) => t.isNotEmpty).join(' ');
       await _collection.doc(dateKey).set({
         'reference': reference,
         'text_en': text,
@@ -87,7 +100,11 @@ class VerseWorker {
     }
 
     await _cacheLocally(dateKey, reference);
-    return {'reference': reference, 'language': language, 'source': 'generated'};
+    return {
+      'reference': reference,
+      'language': language,
+      'source': 'generated'
+    };
   }
 
   Future<void> _cacheLocally(String dateKey, String reference) async {

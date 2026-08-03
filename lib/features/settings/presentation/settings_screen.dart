@@ -27,7 +27,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final themeMode = ref.watch(themeModeProvider);
     final language = ref.watch(languageProvider);
     final user = AuthService.instance.currentUser;
@@ -45,7 +45,6 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/profile'),
             ),
           const Divider(),
-
           ListTile(
             leading: const Icon(Icons.videogame_asset_outlined),
             title: Text(l10n.settingsGames),
@@ -54,14 +53,15 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push('/games'),
           ),
           const Divider(),
-
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(l10n.settingsLanguageVoice),
-            subtitle: Text(_languages.firstWhere((l) => l.$1 == language, orElse: () => _languages.first).$2),
+            subtitle: Text(_languages
+                .firstWhere((l) => l.$1 == language,
+                    orElse: () => _languages.first)
+                .$2),
             onTap: () => _showLanguagePicker(context, ref, language),
           ),
-
           const Divider(),
           ListTile(
             leading: const Icon(Icons.smart_toy_outlined),
@@ -72,10 +72,12 @@ class SettingsScreen extends ConsumerWidget {
             builder: (context, snapshot) {
               final key = snapshot.data;
               return ListTile(
-                leading: Icon(key != null ? Icons.key_rounded : Icons.key_off_outlined),
+                leading: Icon(
+                    key != null ? Icons.key_rounded : Icons.key_off_outlined),
                 title: Text(l10n.settingsGroqKeyTitle),
                 subtitle: key != null
-                    ? Text(l10n.settingsGroqKeyUnlimitedSuffix(UserGroqKeyService.mask(key)))
+                    ? Text(l10n.settingsGroqKeyUnlimitedSuffix(
+                        UserGroqKeyService.mask(key)))
                     : FutureBuilder<int>(
                         future: ref.watch(groqRemainingTodayProvider.future),
                         builder: (context, usageSnapshot) {
@@ -88,11 +90,11 @@ class SettingsScreen extends ConsumerWidget {
                         },
                       ),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showGroqKeyDialog(context, ref, l10n, currentKey: key),
+                onTap: () =>
+                    _showGroqKeyDialog(context, ref, l10n, currentKey: key),
               );
             },
           ),
-
           const Divider(),
           ListTile(
             leading: const Icon(Icons.brightness_6),
@@ -116,26 +118,28 @@ class SettingsScreen extends ConsumerWidget {
             groupValue: themeMode,
             onChanged: (m) => ref.read(themeModeProvider.notifier).setMode(m!),
           ),
-
           const Divider(),
           ListTile(
             leading: const Icon(Icons.download),
-            title: Text(AppLocalizations.of(context)!.settingsDownloads),
-            subtitle: Text(AppLocalizations.of(context)!.settingsDownloadsSubtitle),
+            title: Text(AppLocalizations.of(context).settingsDownloads),
+            subtitle:
+                Text(AppLocalizations.of(context).settingsDownloadsSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/downloads'),
           ),
           ListTile(
             leading: const Icon(Icons.notifications),
-            title: Text(AppLocalizations.of(context)!.settingsNotifications),
-            subtitle: Text(AppLocalizations.of(context)!.settingsNotificationsSubtitle),
+            title: Text(AppLocalizations.of(context).settingsNotifications),
+            subtitle: Text(
+                AppLocalizations.of(context).settingsNotificationsSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/notifications'),
           ),
           ListTile(
             leading: const Icon(Icons.bookmark_outline),
-            title: Text(AppLocalizations.of(context)!.settingsBookmarks),
-            subtitle: Text(AppLocalizations.of(context)!.settingsBookmarksSubtitle),
+            title: Text(AppLocalizations.of(context).settingsBookmarks),
+            subtitle:
+                Text(AppLocalizations.of(context).settingsBookmarksSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/bookmarks'),
           ),
@@ -144,11 +148,11 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l10n.settingsCredits),
             subtitle: Text(l10n.settingsCreditsSubtitle),
           ),
-
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: Text(AppLocalizations.of(context)!.commonSignOut, style: const TextStyle(color: Colors.red)),
+            title: Text(AppLocalizations.of(context).commonSignOut,
+                style: const TextStyle(color: Colors.red)),
             onTap: () async {
               await AuthService.instance.signOut();
               if (context.mounted) context.go('/login');
@@ -159,26 +163,33 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguagePicker(BuildContext context, WidgetRef ref, String current) {
+  void _showLanguagePicker(
+      BuildContext context, WidgetRef ref, String current) {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: _languages.map((l) => ListTile(
-            title: Text(l.$2),
-            trailing: current == l.$1 ? const Icon(Icons.check, color: AppColors.primary) : null,
-            onTap: () {
-              ref.read(languageProvider.notifier).setLanguage(l.$1);
-              Navigator.of(context).pop();
-            },
-          )).toList(),
+          children: _languages
+              .map((l) => ListTile(
+                    title: Text(l.$2),
+                    trailing: current == l.$1
+                        ? const Icon(Icons.check, color: AppColors.primary)
+                        : null,
+                    onTap: () {
+                      ref.read(languageProvider.notifier).setLanguage(l.$1);
+                      Navigator.of(context).pop();
+                    },
+                  ))
+              .toList(),
         ),
       ),
     );
   }
 
-  void _showGroqKeyDialog(BuildContext context, WidgetRef ref, AppLocalizations l10n, {String? currentKey}) {
+  void _showGroqKeyDialog(
+      BuildContext context, WidgetRef ref, AppLocalizations l10n,
+      {String? currentKey}) {
     final controller = TextEditingController();
     var obscure = true;
     showDialog<void>(
@@ -193,8 +204,10 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 Text(
                   currentKey != null
-                      ? l10n.settingsGroqKeyDialogCurrentSet(UserGroqKeyService.mask(currentKey))
-                      : l10n.settingsGroqKeyDialogPrompt(GroqUsageService.dailyFreeLimit),
+                      ? l10n.settingsGroqKeyDialogCurrentSet(
+                          UserGroqKeyService.mask(currentKey))
+                      : l10n.settingsGroqKeyDialogPrompt(
+                          GroqUsageService.dailyFreeLimit),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -205,17 +218,22 @@ class SettingsScreen extends ConsumerWidget {
                     border: const OutlineInputBorder(),
                     isDense: true,
                     suffixIcon: IconButton(
-                      icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      icon: Icon(obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
                       onPressed: () => setDialogState(() => obscure = !obscure),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 InkWell(
-                  onTap: () => launchUrl(Uri.parse('https://console.groq.com/keys')),
+                  onTap: () =>
+                      launchUrl(Uri.parse('https://console.groq.com/keys')),
                   child: const Text(
                     'console.groq.com/keys',
-                    style: TextStyle(color: AppColors.primary, decoration: TextDecoration.underline),
+                    style: TextStyle(
+                        color: AppColors.primary,
+                        decoration: TextDecoration.underline),
                   ),
                 ),
               ],
@@ -230,7 +248,9 @@ class SettingsScreen extends ConsumerWidget {
                   },
                   child: Text(l10n.settingsGroqKeyRemove),
                 ),
-              TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonCancel)),
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l10n.commonCancel)),
               FilledButton(
                 onPressed: () async {
                   final value = controller.text.trim();

@@ -68,7 +68,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     for (final task in _tasks) {
       if (task.status != DownloadStatus.downloading) continue;
       if (_subs.containsKey(task.id)) continue;
-      _subs[task.id] = DownloadWorker.instance.progressStream(task.id).listen((updated) {
+      _subs[task.id] =
+          DownloadWorker.instance.progressStream(task.id).listen((updated) {
         if (!mounted) return;
         setState(() {
           final index = _tasks.indexWhere((t) => t.id == updated.id);
@@ -92,7 +93,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.downloadsTitle)),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).downloadsTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -101,20 +102,25 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
-                      AppLocalizations.of(context)!.downloadsStorageUsed(_formatBytes(_storageBytes)),
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      AppLocalizations.of(context)
+                          .downloadsStorageUsed(_formatBytes(_storageBytes)),
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13),
                     ),
                   ),
                   if (_tasks.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 48),
                       child: Center(
                         child: Text(
-                          AppLocalizations.of(context)!.downloadsEmpty,
+                          AppLocalizations.of(context).downloadsEmpty,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style:
+                              const TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     )
@@ -142,7 +148,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       case DownloadStatus.downloading:
         return const Icon(Icons.downloading, color: AppColors.primary);
       case DownloadStatus.paused:
-        return const Icon(Icons.pause_circle_outline, color: AppColors.textSecondary);
+        return const Icon(Icons.pause_circle_outline,
+            color: AppColors.textSecondary);
       case DownloadStatus.failed:
         return const Icon(Icons.error_outline, color: Colors.red);
       case DownloadStatus.queued:
@@ -153,7 +160,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   Widget _buildSubtitle(DownloadTask task) {
     switch (task.status) {
       case DownloadStatus.downloading:
-        return LinearProgressIndicator(value: task.totalBytes > 0 ? task.progress : null);
+        return LinearProgressIndicator(
+            value: task.totalBytes > 0 ? task.progress : null);
       case DownloadStatus.failed:
         return Text(
           task.errorMessage ?? 'Failed',
@@ -162,7 +170,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       case DownloadStatus.completed:
         return Text(_formatBytes(task.totalBytes));
       case DownloadStatus.paused:
-        return Text('Paused · ${_formatBytes(task.downloadedBytes)} of ${_formatBytes(task.totalBytes)}');
+        return Text(
+            'Paused · ${_formatBytes(task.downloadedBytes)} of ${_formatBytes(task.totalBytes)}');
       case DownloadStatus.queued:
         return const Text('Queued');
     }

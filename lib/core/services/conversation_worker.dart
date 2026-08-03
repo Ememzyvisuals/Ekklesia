@@ -33,7 +33,8 @@ class ConversationWorker {
     });
     // Retry sweep in case a write silently failed without a connectivity
     // event (e.g. Firestore rules rejection during a token refresh window).
-    _retryTimer = Timer.periodic(const Duration(minutes: 2), (_) => flushQueue());
+    _retryTimer =
+        Timer.periodic(const Duration(minutes: 2), (_) => flushQueue());
     flushQueue();
   }
 
@@ -61,7 +62,8 @@ class ConversationWorker {
     final stillPending = <String>[];
     for (final line in lines) {
       final message = ConversationMessage.fromQueueLine(line);
-      if (message == null) continue; // corrupt entry — drop rather than loop forever
+      if (message == null)
+        continue; // corrupt entry — drop rather than loop forever
       try {
         await ConversationRepository.instance.save(message);
       } catch (_) {

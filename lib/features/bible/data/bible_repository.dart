@@ -13,7 +13,11 @@ class BibleReferenceException implements Exception {
 }
 
 class ParsedReference {
-  ParsedReference({required this.book, required this.chapter, this.startVerse, this.endVerse});
+  ParsedReference(
+      {required this.book,
+      required this.chapter,
+      this.startVerse,
+      this.endVerse});
   final CanonicalBook book;
   final int chapter;
   final int? startVerse;
@@ -25,20 +29,25 @@ class ParsedReference {
 /// languages are imported.
 ParsedReference parseBibleReference(String raw) {
   final input = raw.trim();
-  final match = RegExp(r'^(.+?)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$').firstMatch(input);
+  final match =
+      RegExp(r'^(.+?)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$').firstMatch(input);
   if (match == null) {
-    throw BibleReferenceException('Could not parse reference "$raw". Try "John 3:16" or "Psalms 23".');
+    throw BibleReferenceException(
+        'Could not parse reference "$raw". Try "John 3:16" or "Psalms 23".');
   }
   final bookName = match.group(1)!;
   final chapter = int.parse(match.group(2)!);
   final startVerse = match.group(3) != null ? int.parse(match.group(3)!) : null;
-  final endVerse = match.group(4) != null ? int.parse(match.group(4)!) : startVerse;
+  final endVerse =
+      match.group(4) != null ? int.parse(match.group(4)!) : startVerse;
 
   final book = findCanonicalBookByName(bookName);
   if (book == null) {
-    throw BibleReferenceException('Unknown book "$bookName" in reference "$raw".');
+    throw BibleReferenceException(
+        'Unknown book "$bookName" in reference "$raw".');
   }
-  return ParsedReference(book: book, chapter: chapter, startVerse: startVerse, endVerse: endVerse);
+  return ParsedReference(
+      book: book, chapter: chapter, startVerse: startVerse, endVerse: endVerse);
 }
 
 class BibleRepository {
@@ -46,10 +55,15 @@ class BibleRepository {
   final Isar isar;
 
   Future<List<BibleBookEntity>> getBooks(String language) {
-    return isar.bibleBookEntitys.filter().languageEqualTo(language).sortByPosition().findAll();
+    return isar.bibleBookEntitys
+        .filter()
+        .languageEqualTo(language)
+        .sortByPosition()
+        .findAll();
   }
 
-  Future<BibleChapterEntity?> getChapter(String language, String bookCode, int chapterNumber) {
+  Future<BibleChapterEntity?> getChapter(
+      String language, String bookCode, int chapterNumber) {
     return isar.bibleChapterEntitys
         .filter()
         .languageEqualTo(language)
@@ -79,7 +93,8 @@ class BibleRepository {
   /// Resolves a "Book Chapter:Verse[-Verse]" reference to verse rows for
   /// [language]. Throws [BibleReferenceException] if unparseable, or if the
   /// language hasn't been imported / the reference is out of range.
-  Future<List<BibleVerseEntity>> getPassage(String reference, {required String language}) async {
+  Future<List<BibleVerseEntity>> getPassage(String reference,
+      {required String language}) async {
     final parsed = parseBibleReference(reference);
     final verses = await getVerses(
       language,
@@ -98,7 +113,8 @@ class BibleRepository {
   }
 
   /// Full-text substring search over normalized verse text. Offline, no API.
-  Future<List<BibleVerseEntity>> search(String language, String query, {int limit = 50}) {
+  Future<List<BibleVerseEntity>> search(String language, String query,
+      {int limit = 50}) {
     final normalized = query
         .toLowerCase()
         .replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), '')
@@ -113,11 +129,15 @@ class BibleRepository {
   }
 
   Future<bool> isLanguageImported(String language) async {
-    final count = await isar.bibleBookEntitys.filter().languageEqualTo(language).count();
+    final count =
+        await isar.bibleBookEntitys.filter().languageEqualTo(language).count();
     return count >= 66;
   }
 
   Future<BibleImportRecordEntity?> importRecord(String language) {
-    return isar.bibleImportRecordEntitys.filter().languageEqualTo(language).findFirst();
+    return isar.bibleImportRecordEntitys
+        .filter()
+        .languageEqualTo(language)
+        .findFirst();
   }
 }

@@ -27,7 +27,8 @@ class UserProfile {
   final String? photoUrl;
   final String? avatarId;
 
-  factory UserProfile.fromFirestore(String uid, Map<String, dynamic> data) => UserProfile(
+  factory UserProfile.fromFirestore(String uid, Map<String, dynamic> data) =>
+      UserProfile(
         uid: uid,
         displayName: data['display_name'] as String? ?? '',
         email: data['email'] as String? ?? '',
@@ -59,12 +60,15 @@ class ProfileRepository {
     String? bio,
     String? avatarId,
   }) async {
-    final updates = <String, dynamic>{'updated_at': FieldValue.serverTimestamp()};
+    final updates = <String, dynamic>{
+      'updated_at': FieldValue.serverTimestamp()
+    };
     if (displayName != null) updates['display_name'] = displayName;
     if (bio != null) updates['bio'] = bio;
     if (avatarId != null) {
       updates['avatar_id'] = avatarId;
-      updates['photo_url'] = null; // picking a default avatar clears any uploaded photo
+      updates['photo_url'] =
+          null; // picking a default avatar clears any uploaded photo
     }
     await _firestore.collection('users').doc(uid).update(updates);
   }

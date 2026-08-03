@@ -15,7 +15,11 @@ import '../config/app_config.dart';
 /// is the actual "surpass it" case, not a reimplementation for its own
 /// sake.
 class DclmNowPlaying {
-  DclmNowPlaying({required this.artist, required this.title, required this.artUrl, required this.listeners});
+  DclmNowPlaying(
+      {required this.artist,
+      required this.title,
+      required this.artUrl,
+      required this.listeners});
   final String artist;
   final String title;
   final String artUrl;
@@ -43,7 +47,8 @@ class RadioService {
   Stream<DclmNowPlaying?> get nowPlayingStream => _nowPlayingController.stream;
 
   Future<void> playLanguage(String languageKey) async {
-    final url = AppConfig.dclmStreams[languageKey] ?? AppConfig.dclmExtraStreams[languageKey];
+    final url = AppConfig.dclmStreams[languageKey] ??
+        AppConfig.dclmExtraStreams[languageKey];
     if (url == null) {
       throw Exception('No DCLM stream configured for "$languageKey"');
     }
@@ -76,7 +81,8 @@ class RadioService {
   void _startNowPlayingPolling(String languageKey) {
     _nowPlayingTimer?.cancel();
     _fetchNowPlaying(languageKey);
-    _nowPlayingTimer = Timer.periodic(const Duration(seconds: 60), (_) => _fetchNowPlaying(languageKey));
+    _nowPlayingTimer = Timer.periodic(
+        const Duration(seconds: 60), (_) => _fetchNowPlaying(languageKey));
   }
 
   Future<void> _fetchNowPlaying(String languageKey) async {
@@ -94,8 +100,10 @@ class RadioService {
         return;
       }
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final song = (json['now_playing'] as Map<String, dynamic>?)?['song'] as Map<String, dynamic>?;
-      final listeners = (json['listeners'] as Map<String, dynamic>?)?['current'] as int? ?? 0;
+      final song = (json['now_playing'] as Map<String, dynamic>?)?['song']
+          as Map<String, dynamic>?;
+      final listeners =
+          (json['listeners'] as Map<String, dynamic>?)?['current'] as int? ?? 0;
       if (song == null) {
         _nowPlayingController.add(null);
         return;

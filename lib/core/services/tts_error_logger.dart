@@ -16,7 +16,8 @@ class TtsErrorLogger {
   TtsErrorLogger._internal();
   static final TtsErrorLogger instance = TtsErrorLogger._internal();
 
-  final _collection = FirebaseFirestore.instance.collection(AppConfig.workerLogsCollection);
+  final _collection =
+      FirebaseFirestore.instance.collection(AppConfig.workerLogsCollection);
 
   Future<void> logRetry({
     required String source, // 'wazobiaVoice' | 'yarnGpt'

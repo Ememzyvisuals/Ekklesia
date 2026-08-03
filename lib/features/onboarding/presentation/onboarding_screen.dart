@@ -71,7 +71,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   _LanguagePage(
                     selected: _selectedLanguage,
                     languages: _languages,
-                    onSelect: (code) => setState(() => _selectedLanguage = code),
+                    onSelect: (code) =>
+                        setState(() => _selectedLanguage = code),
                   ),
                 ],
               ),
@@ -81,14 +82,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 children: [
                   Row(
-                    children: List.generate(3, (i) => Container(
-                      margin: const EdgeInsets.only(right: 6),
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i == _page ? AppColors.primary : AppColors.primary.withOpacity(0.2),
-                      ),
-                    )),
+                    children: List.generate(
+                        3,
+                        (i) => Container(
+                              margin: const EdgeInsets.only(right: 6),
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: i == _page
+                                    ? AppColors.primary
+                                    : AppColors.primary.withValues(alpha: 0.2),
+                              ),
+                            )),
                   ),
                   const Spacer(),
                   ElevatedButton(
@@ -115,7 +121,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 }
 
 class _WelcomePage extends StatelessWidget {
-  const _WelcomePage({required this.title, required this.subtitle, required this.icon});
+  const _WelcomePage(
+      {required this.title, required this.subtitle, required this.icon});
   final String title;
   final String subtitle;
   final IconData icon;
@@ -129,9 +136,13 @@ class _WelcomePage extends StatelessWidget {
         children: [
           Icon(icon, size: 96, color: AppColors.primary),
           const SizedBox(height: 32),
-          Text(title, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+          Text(title,
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          Text(subtitle, textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textSecondary(context))),
+          Text(subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary(context))),
         ],
       ),
     );
@@ -139,7 +150,10 @@ class _WelcomePage extends StatelessWidget {
 }
 
 class _LanguagePage extends StatelessWidget {
-  const _LanguagePage({required this.selected, required this.languages, required this.onSelect});
+  const _LanguagePage(
+      {required this.selected,
+      required this.languages,
+      required this.onSelect});
   final String selected;
   final List<(String, String)> languages;
   final void Function(String) onSelect;
@@ -151,9 +165,13 @@ class _LanguagePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Choose your language', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+          Text('Choose your language',
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center),
           const SizedBox(height: 8),
-          Text('You can change this anytime in Settings', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textSecondary(context))),
+          Text('You can change this anytime in Settings',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary(context))),
           const SizedBox(height: 24),
           ...languages.map((l) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -162,15 +180,25 @@ class _LanguagePage extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: selected == l.$1 ? AppColors.primary.withOpacity(0.1) : AppTheme.surface(context),
-                      border: Border.all(color: selected == l.$1 ? AppColors.primary : Colors.transparent, width: 2),
+                      color: selected == l.$1
+                          ? AppColors.primary.withValues(alpha: 0.1)
+                          : AppTheme.surface(context),
+                      border: Border.all(
+                          color: selected == l.$1
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          width: 2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Text(l.$2, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(l.$2,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600)),
                         const Spacer(),
-                        if (selected == l.$1) const Icon(Icons.check_circle, color: AppColors.primary),
+                        if (selected == l.$1)
+                          const Icon(Icons.check_circle,
+                              color: AppColors.primary),
                       ],
                     ),
                   ),

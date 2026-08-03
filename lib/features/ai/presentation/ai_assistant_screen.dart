@@ -55,8 +55,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   static const _systemPrompt = GroqMessage(
     role: 'system',
-    content:
-        'You are a warm, biblically grounded Christian assistant for the '
+    content: 'You are a warm, biblically grounded Christian assistant for the '
         'Ekklesia app. Answer questions about scripture, offer to write '
         'short prayers or devotionals when asked, and keep answers clear '
         'and encouraging. Keep responses reasonably short for a mobile '
@@ -111,7 +110,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   Future<void> _persist(_ChatEntry entry) async {
     final uid = AuthService.instance.currentUser?.uid;
-    if (uid == null) return; // AI screen is auth-gated at the router level; defensive only.
+    if (uid == null)
+      return; // AI screen is auth-gated at the router level; defensive only.
     await ConversationWorker.instance.record(ConversationMessage(
       id: entry.id,
       uid: uid,
@@ -142,11 +142,12 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         ..._history.map((e) => GroqMessage(role: e.role, content: e.text)),
       ];
       final reply = await GroqService.instance.chat(messages);
-      final assistantEntry = _ChatEntry(id: _newMessageId(), role: 'assistant', text: reply);
+      final assistantEntry =
+          _ChatEntry(id: _newMessageId(), role: 'assistant', text: reply);
       setState(() => _history.add(assistantEntry));
       unawaited(_persist(assistantEntry));
     } on GroqUsageLimitException catch (e) {
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _isUsageLimitError = true;
         _error = l10n.aiUsageLimitReached(e.dailyLimit);
@@ -195,7 +196,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       if (!mounted) return;
       setState(() => _savedIndices.add(index));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(total > 1 ? 'Saving $total parts to Downloads…' : 'Saving to Downloads…')),
+        SnackBar(
+            content: Text(total > 1
+                ? 'Saving $total parts to Downloads…'
+                : 'Saving to Downloads…')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -214,7 +218,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       _error = null;
     });
     _queueProgressSub?.cancel();
-    _queueProgressSub = AudioService.instance.queueProgressStream.listen((progress) {
+    _queueProgressSub =
+        AudioService.instance.queueProgressStream.listen((progress) {
       if (!mounted) return;
       setState(() {
         _queueProgressLabel =
@@ -253,7 +258,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.aiAssistantTitle),
+        title: Text(AppLocalizations.of(context).aiAssistantTitle),
         actions: [
           FutureBuilder<bool>(
             future: UserGroqKeyService.instance.hasKey(),
@@ -268,8 +273,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     padding: const EdgeInsets.only(right: 12),
                     child: Center(
                       child: Text(
-                        AppLocalizations.of(context)!.aiRemainingToday(remaining),
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        AppLocalizations.of(context)
+                            .aiRemainingToday(remaining),
+                        style: TextStyle(
+                            fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ),
                   );
@@ -285,100 +292,136 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             child: _loadingHistory
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _history.length,
-              itemBuilder: (context, index) {
-                final entry = _history[index];
-                final isUser = entry.role == 'user';
-                return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.all(12),
-                    constraints: const BoxConstraints(maxWidth: 280),
-                    decoration: BoxDecoration(
-                      color: isUser ? AppColors.primary : AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          entry.text,
-                          style: TextStyle(color: isUser ? Colors.white : AppColors.textPrimary),
-                        ),
-                        if (!isUser) ...[
-                          const SizedBox(height: 6),
-                          Builder(builder: (context) {
-                            final isPlaying = _listeningIndex == index;
-                            return InkWell(
-                              onTap: isPlaying ? null : () => _listenTo(entry.text, index),
-                              child: Row(
-                                children: [
-                                  isPlaying
-                                      ? const SizedBox(
-                                          height: 12, width: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2, color: AppColors.accent,
-                                          ),
-                                        )
-                                      : const Icon(CupertinoIcons.speaker_2_fill, size: 16, color: AppColors.accent),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    isPlaying ? (_queueProgressLabel ?? 'Loading...') : 'Listen',
-                                    style: const TextStyle(color: AppColors.accent, fontSize: 12),
-                                  ),
-                                ],
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _history.length,
+                    itemBuilder: (context, index) {
+                      final entry = _history[index];
+                      final isUser = entry.role == 'user';
+                      return Align(
+                        alignment: isUser
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.all(12),
+                          constraints: const BoxConstraints(maxWidth: 280),
+                          decoration: BoxDecoration(
+                            color:
+                                isUser ? AppColors.primary : AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.text,
+                                style: TextStyle(
+                                    color: isUser
+                                        ? Colors.white
+                                        : AppColors.textPrimary),
                               ),
-                            );
-                          }),
-                          const SizedBox(height: 4),
-                          Builder(builder: (context) {
-                            final isSaving = _savingIndex == index;
-                            final isSaved = _savedIndices.contains(index);
-                            return InkWell(
-                              onTap: (isSaving || isSaved) ? null : () => _saveOffline(entry.text, index),
-                              child: Row(
-                                children: [
-                                  isSaving
-                                      ? const SizedBox(
-                                          height: 12, width: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2, color: AppColors.accent,
-                                          ),
-                                        )
-                                      : Icon(
-                                          isSaved ? CupertinoIcons.checkmark_alt_circle_fill : CupertinoIcons.cloud_download,
-                                          size: 16,
-                                          color: AppColors.accent,
+                              if (!isUser) ...[
+                                const SizedBox(height: 6),
+                                Builder(builder: (context) {
+                                  final isPlaying = _listeningIndex == index;
+                                  return InkWell(
+                                    onTap: isPlaying
+                                        ? null
+                                        : () => _listenTo(entry.text, index),
+                                    child: Row(
+                                      children: [
+                                        isPlaying
+                                            ? const SizedBox(
+                                                height: 12,
+                                                width: 12,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: AppColors.accent,
+                                                ),
+                                              )
+                                            : const Icon(
+                                                CupertinoIcons.speaker_2_fill,
+                                                size: 16,
+                                                color: AppColors.accent),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          isPlaying
+                                              ? (_queueProgressLabel ??
+                                                  'Loading...')
+                                              : 'Listen',
+                                          style: const TextStyle(
+                                              color: AppColors.accent,
+                                              fontSize: 12),
                                         ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    isSaved ? 'Saved offline' : (isSaving ? 'Saving...' : 'Save offline'),
-                                    style: const TextStyle(color: AppColors.accent, fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
-                      ],
-                    ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                const SizedBox(height: 4),
+                                Builder(builder: (context) {
+                                  final isSaving = _savingIndex == index;
+                                  final isSaved = _savedIndices.contains(index);
+                                  return InkWell(
+                                    onTap: (isSaving || isSaved)
+                                        ? null
+                                        : () => _saveOffline(entry.text, index),
+                                    child: Row(
+                                      children: [
+                                        isSaving
+                                            ? const SizedBox(
+                                                height: 12,
+                                                width: 12,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: AppColors.accent,
+                                                ),
+                                              )
+                                            : Icon(
+                                                isSaved
+                                                    ? CupertinoIcons
+                                                        .checkmark_alt_circle_fill
+                                                    : CupertinoIcons
+                                                        .cloud_download,
+                                                size: 16,
+                                                color: AppColors.accent,
+                                              ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          isSaved
+                                              ? 'Saved offline'
+                                              : (isSaving
+                                                  ? 'Saving...'
+                                                  : 'Save offline'),
+                                          style: const TextStyle(
+                                              color: AppColors.accent,
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
           if (_error != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
-                  Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red))),
+                  Expanded(
+                      child: Text(_error!,
+                          style: const TextStyle(color: Colors.red))),
                   if (_isUsageLimitError)
                     TextButton(
                       onPressed: () => context.push('/settings'),
-                      child: Text(AppLocalizations.of(context)!.navSettings),
+                      child: Text(AppLocalizations.of(context).navSettings),
                     ),
                 ],
               ),
@@ -403,8 +446,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     onPressed: _sending ? null : _send,
                     icon: _sending
                         ? const SizedBox(
-                            height: 16, width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(CupertinoIcons.paperplane_fill),
                   ),

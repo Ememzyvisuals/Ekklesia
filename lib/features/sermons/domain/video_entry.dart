@@ -44,7 +44,8 @@ class VideoEntry {
         description: data['description'] as String? ?? '',
         thumbnailUrl: data['thumbnail_url'] as String? ?? '',
         publishedAt: (data['published_at'] is String)
-            ? DateTime.tryParse(data['published_at'] as String) ?? DateTime.now()
+            ? DateTime.tryParse(data['published_at'] as String) ??
+                DateTime.now()
             : DateTime.now(),
         channelTitle: data['channel'] as String? ?? 'DCLM',
         durationSeconds: data['duration_seconds'] as int?,

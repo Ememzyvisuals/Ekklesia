@@ -40,10 +40,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _friendlyError(Object e) {
     final msg = e.toString();
-    if (msg.contains('user-not-found') || msg.contains('wrong-password') || msg.contains('invalid-credential')) {
+    if (msg.contains('user-not-found') ||
+        msg.contains('wrong-password') ||
+        msg.contains('invalid-credential')) {
       return 'Incorrect email or password.';
     }
-    if (msg.contains('invalid-email')) return 'That email address looks invalid.';
+    if (msg.contains('invalid-email'))
+      return 'That email address looks invalid.';
     return 'Something went wrong. Please try again.';
   }
 
@@ -57,20 +60,24 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Welcome back', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Welcome back',
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
-              Text('Sign in to continue', style: TextStyle(color: AppTheme.textSecondary(context))),
+              Text('Sign in to continue',
+                  style: TextStyle(color: AppTheme.textSecondary(context))),
               const SizedBox(height: 32),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Email', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Password', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 8),
               Align(
@@ -78,10 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: TextButton(
                   onPressed: () async {
                     if (_emailController.text.trim().isEmpty) return;
-                    await AuthService.instance.sendPasswordReset(_emailController.text.trim());
+                    await AuthService.instance
+                        .sendPasswordReset(_emailController.text.trim());
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Password reset email sent.')),
+                        const SnackBar(
+                            content: Text('Password reset email sent.')),
                       );
                     }
                   },
@@ -91,14 +100,17 @@ class _LoginScreenState extends State<LoginScreen> {
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                  child:
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
                 ),
               ElevatedButton(
                 onPressed: _loading ? null : _signIn,
                 child: _loading
                     ? const SizedBox(
-                        height: 18, width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
                       )
                     : const Text('Sign In'),
               ),

@@ -57,7 +57,9 @@ class AIConfig {
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-      final liveIds = ((decoded['modelIds'] as List<dynamic>? ?? [])).whereType<String>().toSet();
+      final liveIds = ((decoded['modelIds'] as List<dynamic>? ?? []))
+          .whereType<String>()
+          .toSet();
 
       for (final candidate in AppConfig.groqSupportedModels) {
         if (liveIds.contains(candidate)) {

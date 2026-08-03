@@ -85,13 +85,16 @@ class GradioClient {
       );
     }
 
-    final resultUri = Uri.parse('$spaceBaseUrl/gradio_api/call/$apiName/$eventId');
+    final resultUri =
+        Uri.parse('$spaceBaseUrl/gradio_api/call/$apiName/$eventId');
     final request = http.Request('GET', resultUri);
 
     late final String responseBody;
     try {
-      final streamedResponse = await _client.send(request).timeout(_startTimeout);
-      responseBody = await streamedResponse.stream.bytesToString().timeout(_streamTimeout);
+      final streamedResponse =
+          await _client.send(request).timeout(_startTimeout);
+      responseBody =
+          await streamedResponse.stream.bytesToString().timeout(_streamTimeout);
     } on TimeoutException {
       throw GradioClientException(
         'Timed out waiting for $apiName to finish generating after '
@@ -99,7 +102,8 @@ class GradioClient {
         type: GradioErrorType.timeout,
       );
     } on SocketException catch (e) {
-      throw GradioClientException('Network error streaming $apiName result: $e', type: GradioErrorType.network);
+      throw GradioClientException('Network error streaming $apiName result: $e',
+          type: GradioErrorType.network);
     }
 
     // Server-sent events look like either:
@@ -113,12 +117,15 @@ class GradioClient {
       if (lines[i].startsWith('event: complete') && i + 1 < lines.length) {
         final dataLine = lines[i + 1];
         if (dataLine.startsWith('data: ')) {
-          return jsonDecode(dataLine.substring('data: '.length)) as List<dynamic>;
+          return jsonDecode(dataLine.substring('data: '.length))
+              as List<dynamic>;
         }
       }
       if (lines[i].startsWith('event: error') && i + 1 < lines.length) {
         final dataLine = lines[i + 1];
-        final errorText = dataLine.startsWith('data: ') ? dataLine.substring('data: '.length) : dataLine;
+        final errorText = dataLine.startsWith('data: ')
+            ? dataLine.substring('data: '.length)
+            : dataLine;
         throw GradioClientException(
           '$apiName reported an error: $errorText',
           type: _classifyErrorText(errorText),
@@ -134,14 +141,16 @@ class GradioClient {
 
   GradioErrorType _classifyStatusCode(int status, String body) {
     if (status == 429) return GradioErrorType.rateLimited;
-    if (status == 503 || _looksLikeColdStart(body)) return GradioErrorType.spaceStarting;
+    if (status == 503 || _looksLikeColdStart(body))
+      return GradioErrorType.spaceStarting;
     if (status >= 500) return GradioErrorType.serverError;
     return GradioErrorType.unknown;
   }
 
   GradioErrorType _classifyErrorText(String text) {
     final lower = text.toLowerCase();
-    if (lower.contains('rate limit') || lower.contains('too many requests')) return GradioErrorType.rateLimited;
+    if (lower.contains('rate limit') || lower.contains('too many requests'))
+      return GradioErrorType.rateLimited;
     if (_looksLikeColdStart(lower)) return GradioErrorType.spaceStarting;
     return GradioErrorType.serverError;
   }
@@ -184,7 +193,8 @@ enum GradioErrorType {
 }
 
 class GradioClientException implements Exception {
-  GradioClientException(this.message, {this.type = GradioErrorType.unknown, this.statusCode});
+  GradioClientException(this.message,
+      {this.type = GradioErrorType.unknown, this.statusCode});
   final String message;
   final GradioErrorType type;
   final int? statusCode;

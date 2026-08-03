@@ -23,9 +23,11 @@ class PrayerWorker {
   static const _cacheKey = 'cached_daily_prayer';
   static const _cacheDateKey = 'cached_daily_prayer_date';
 
-  final _collection = FirebaseFirestore.instance.collection(AppConfig.dailyPrayerCollection);
+  final _collection =
+      FirebaseFirestore.instance.collection(AppConfig.dailyPrayerCollection);
 
-  Future<Map<String, dynamic>> getTodaysPrayer({required String language}) async {
+  Future<Map<String, dynamic>> getTodaysPrayer(
+      {required String language}) async {
     final today = _todayKey();
     final prefs = await SharedPreferences.getInstance();
 
@@ -46,13 +48,14 @@ class PrayerWorker {
       return {
         'text':
             'Lord, thank You for this day. Guide my steps, renew my strength, '
-            'and help me walk in Your word. Amen.',
+                'and help me walk in Your word. Amen.',
         'source': 'offline_fallback',
       };
     }
   }
 
-  Future<Map<String, dynamic>> _generateAndStore(String dateKey, String language) async {
+  Future<Map<String, dynamic>> _generateAndStore(
+      String dateKey, String language) async {
     final verse = await VerseWorker.instance.getTodaysVerse(language: language);
     final reference = verse['reference'] as String;
 
@@ -61,14 +64,15 @@ class PrayerWorker {
       text = await GroqService.instance.chat([
         GroqMessage(
           role: 'system',
-          content:
-              'You write short, warm, biblically grounded daily prayers '
+          content: 'You write short, warm, biblically grounded daily prayers '
               '(4-6 sentences) for a Christian devotional app. Base the '
               'prayer thematically on the given verse reference without '
               'quoting long passages of scripture. Plain text only, no '
               'markdown, no preamble like "Here is a prayer".',
         ),
-        GroqMessage(role: 'user', content: 'Write today\'s prayer based on $reference.'),
+        GroqMessage(
+            role: 'user',
+            content: 'Write today\'s prayer based on $reference.'),
       ]);
     } catch (_) {
       text = 'Lord, as we reflect on $reference today, help us live it out '

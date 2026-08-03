@@ -37,7 +37,8 @@ class BibleAnnotationsRepository {
         .verseNumberEqualTo(verseNumber)
         .findFirst();
     await isar.writeTxn(() async {
-      if (existing != null) await isar.bibleHighlightEntitys.delete(existing.id);
+      if (existing != null)
+        await isar.bibleHighlightEntitys.delete(existing.id);
       await isar.bibleHighlightEntitys.put(
         BibleHighlightEntity()
           ..language = language
@@ -92,11 +93,15 @@ class BibleAnnotationsRepository {
     required String text,
   }) async {
     final existing = await getNote(
-      language: language, bookCode: bookCode, chapter: chapter, verseNumber: verseNumber,
+      language: language,
+      bookCode: bookCode,
+      chapter: chapter,
+      verseNumber: verseNumber,
     );
     await isar.writeTxn(() async {
       if (existing != null) await isar.bibleNoteEntitys.delete(existing.id);
-      if (text.trim().isEmpty) return; // empty text = delete, don't store a blank note
+      if (text.trim().isEmpty)
+        return; // empty text = delete, don't store a blank note
       await isar.bibleNoteEntitys.put(
         BibleNoteEntity()
           ..language = language
@@ -112,7 +117,10 @@ class BibleAnnotationsRepository {
   // ---- Reading progress / Continue Reading ----
 
   Future<BibleReadingProgressEntity?> getProgress(String language) {
-    return isar.bibleReadingProgressEntitys.filter().languageEqualTo(language).findFirst();
+    return isar.bibleReadingProgressEntitys
+        .filter()
+        .languageEqualTo(language)
+        .findFirst();
   }
 
   Future<void> saveProgress({
@@ -135,7 +143,8 @@ class BibleAnnotationsRepository {
 
   // ---- Reading streak ----
 
-  static int _dayNumber(DateTime dt) => DateTime(dt.year, dt.month, dt.day).difference(DateTime(1970)).inDays;
+  static int _dayNumber(DateTime dt) =>
+      DateTime(dt.year, dt.month, dt.day).difference(DateTime(1970)).inDays;
 
   Future<BibleReadingStreakEntity> getStreak() async {
     final existing = await isar.bibleReadingStreakEntitys.where().findFirst();
@@ -155,7 +164,7 @@ class BibleAnnotationsRepository {
 
     final wasConsecutive = streak != null && streak.lastReadDay == today - 1;
     final updated = (streak ?? BibleReadingStreakEntity())
-      ..currentStreak = wasConsecutive ? (streak!.currentStreak + 1) : 1
+      ..currentStreak = wasConsecutive ? (streak.currentStreak + 1) : 1
       ..totalDaysRead = (streak?.totalDaysRead ?? 0) + 1
       ..lastReadDay = today;
     updated.longestStreak = updated.currentStreak > updated.longestStreak

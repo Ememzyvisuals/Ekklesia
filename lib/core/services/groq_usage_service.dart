@@ -34,7 +34,8 @@ class GroqUsageService {
   Future<int> getUsedToday() async {
     final prefs = await SharedPreferences.getInstance();
     final storedDate = prefs.getString(_keyDate);
-    if (storedDate != _todayKey()) return 0; // new day — previous count doesn't carry over
+    if (storedDate != _todayKey())
+      return 0; // new day — previous count doesn't carry over
     return prefs.getInt(_keyCount) ?? 0;
   }
 
@@ -55,7 +56,8 @@ class GroqUsageService {
     final prefs = await SharedPreferences.getInstance();
     final today = _todayKey();
     final storedDate = prefs.getString(_keyDate);
-    final currentCount = storedDate == today ? (prefs.getInt(_keyCount) ?? 0) : 0;
+    final currentCount =
+        storedDate == today ? (prefs.getInt(_keyCount) ?? 0) : 0;
     await prefs.setString(_keyDate, today);
     await prefs.setInt(_keyCount, currentCount + 1);
   }

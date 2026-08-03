@@ -5,7 +5,6 @@ import '../../../core/services/isar_service.dart';
 import 'bible_annotations_repository.dart';
 import 'bible_audio_cache.dart';
 import 'bible_importer.dart';
-import 'bible_local_schema.dart';
 import 'bible_repository.dart';
 
 /// Isar must already be open (IsarService.instance.open() awaited in
@@ -24,7 +23,8 @@ final bibleAudioCacheProvider = Provider<BibleAudioCache>((ref) {
   return BibleAudioCache(ref.watch(isarProvider));
 });
 
-final bibleAnnotationsRepositoryProvider = Provider<BibleAnnotationsRepository>((ref) {
+final bibleAnnotationsRepositoryProvider =
+    Provider<BibleAnnotationsRepository>((ref) {
   return BibleAnnotationsRepository(ref.watch(isarProvider));
 });
 
@@ -54,7 +54,8 @@ final bibleLanguageProvider = StateProvider<String>((ref) => 'en');
 
 /// Re-checked whenever [bibleLanguageProvider] changes or invalidated after
 /// an import completes.
-final bibleImportStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, language) async {
+final bibleImportStatusProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, language) async {
   final repo = ref.watch(bibleRepositoryProvider);
   return repo.isLanguageImported(language);
 });

@@ -51,18 +51,30 @@ class AppTypography {
   static TextStyle _style(double size, FontWeight weight, {Color? color}) =>
       GoogleFonts.outfit(fontSize: size, fontWeight: weight, color: color);
 
-  static TextStyle displayLarge({Color? color}) => _style(56, FontWeight.w700, color: color);
-  static TextStyle displayMedium({Color? color}) => _style(48, FontWeight.w700, color: color);
-  static TextStyle headlineLarge({Color? color}) => _style(36, FontWeight.w600, color: color);
-  static TextStyle headlineMedium({Color? color}) => _style(32, FontWeight.w600, color: color);
-  static TextStyle titleLarge({Color? color}) => _style(24, FontWeight.w600, color: color);
-  static TextStyle titleMedium({Color? color}) => _style(20, FontWeight.w500, color: color);
-  static TextStyle titleSmall({Color? color}) => _style(18, FontWeight.w500, color: color);
-  static TextStyle bodyLarge({Color? color}) => _style(16, FontWeight.w400, color: color);
-  static TextStyle bodyMedium({Color? color}) => _style(15, FontWeight.w400, color: color);
-  static TextStyle bodySmall({Color? color}) => _style(14, FontWeight.w400, color: color);
-  static TextStyle caption({Color? color}) => _style(12, FontWeight.w400, color: color);
-  static TextStyle button({Color? color}) => _style(16, FontWeight.w600, color: color);
+  static TextStyle displayLarge({Color? color}) =>
+      _style(56, FontWeight.w700, color: color);
+  static TextStyle displayMedium({Color? color}) =>
+      _style(48, FontWeight.w700, color: color);
+  static TextStyle headlineLarge({Color? color}) =>
+      _style(36, FontWeight.w600, color: color);
+  static TextStyle headlineMedium({Color? color}) =>
+      _style(32, FontWeight.w600, color: color);
+  static TextStyle titleLarge({Color? color}) =>
+      _style(24, FontWeight.w600, color: color);
+  static TextStyle titleMedium({Color? color}) =>
+      _style(20, FontWeight.w500, color: color);
+  static TextStyle titleSmall({Color? color}) =>
+      _style(18, FontWeight.w500, color: color);
+  static TextStyle bodyLarge({Color? color}) =>
+      _style(16, FontWeight.w400, color: color);
+  static TextStyle bodyMedium({Color? color}) =>
+      _style(15, FontWeight.w400, color: color);
+  static TextStyle bodySmall({Color? color}) =>
+      _style(14, FontWeight.w400, color: color);
+  static TextStyle caption({Color? color}) =>
+      _style(12, FontWeight.w400, color: color);
+  static TextStyle button({Color? color}) =>
+      _style(16, FontWeight.w600, color: color);
 }
 
 class AppTheme {
@@ -86,10 +98,12 @@ class AppTheme {
   );
 
   static TextTheme _textTheme(Brightness brightness) {
-    final primary =
-        brightness == Brightness.dark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final secondary =
-        brightness == Brightness.dark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final primary = brightness == Brightness.dark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final secondary = brightness == Brightness.dark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return TextTheme(
       displayLarge: AppTypography.displayLarge(color: primary),
@@ -131,7 +145,8 @@ class AppTheme {
         foregroundColor: AppColors.textPrimaryLight,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTypography.titleMedium(color: AppColors.textPrimaryLight),
+        titleTextStyle:
+            AppTypography.titleMedium(color: AppColors.textPrimaryLight),
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardLight,
@@ -145,7 +160,8 @@ class AppTheme {
           foregroundColor: Colors.white,
           textStyle: AppTypography.button(),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     );
@@ -160,7 +176,8 @@ class AppTheme {
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
       ).copyWith(
-        primary: AppColors.accent, // Gold reads better as the dark-mode accent than deep green
+        primary: AppColors
+            .accent, // Gold reads better as the dark-mode accent than deep green
         secondary: AppColors.primary,
         tertiary: AppColors.accent,
         surface: AppColors.cardDark,
@@ -175,14 +192,16 @@ class AppTheme {
         foregroundColor: AppColors.textPrimaryDark,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTypography.titleMedium(color: AppColors.textPrimaryDark),
+        titleTextStyle:
+            AppTypography.titleMedium(color: AppColors.textPrimaryDark),
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.06), width: 0.5),
+          side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.06), width: 0.5),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -191,7 +210,8 @@ class AppTheme {
           foregroundColor: AppColors.textPrimaryLight,
           textStyle: AppTypography.button(),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     );
@@ -200,13 +220,17 @@ class AppTheme {
   /// Theme-aware surface/text colors for widgets that need to adapt
   /// without rebuilding via Theme.of(context) everywhere.
   static Color surface(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? AppColors.cardDark : AppColors.cardLight;
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.cardDark
+          : AppColors.cardLight;
 
-  static Color textPrimary(BuildContext context) => Theme.of(context).brightness == Brightness.dark
-      ? AppColors.textPrimaryDark
-      : AppColors.textPrimaryLight;
+  static Color textPrimary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.textPrimaryDark
+          : AppColors.textPrimaryLight;
 
-  static Color textSecondary(BuildContext context) => Theme.of(context).brightness == Brightness.dark
-      ? AppColors.textSecondaryDark
-      : AppColors.textSecondaryLight;
+  static Color textSecondary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.textSecondaryDark
+          : AppColors.textSecondaryLight;
 }

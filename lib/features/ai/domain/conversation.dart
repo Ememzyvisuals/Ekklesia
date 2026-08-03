@@ -30,7 +30,8 @@ class ConversationMessage {
   /// False while queued locally and not yet written to Firestore (offline).
   final bool synced;
 
-  factory ConversationMessage.fromFirestore(String id, Map<String, dynamic> data) {
+  factory ConversationMessage.fromFirestore(
+      String id, Map<String, dynamic> data) {
     return ConversationMessage(
       id: id,
       uid: data['uid'] as String? ?? '',

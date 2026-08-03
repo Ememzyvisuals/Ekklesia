@@ -8,7 +8,8 @@ import '../../../core/services/auth_service.dart';
 /// Takes the AI-generated quiz for a message, scores it, and records the
 /// attempt to Firestore (`quiz_progress`, per Volume 8).
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key, required this.messageId, required this.questions});
+  const QuizScreen(
+      {super.key, required this.messageId, required this.questions});
 
   final String messageId;
   final List<Map<String, dynamic>> questions;
@@ -44,7 +45,8 @@ class _QuizScreenState extends State<QuizScreen> {
     } else {
       setState(() => _finished = true);
       final uid = AuthService.instance.currentUser?.uid;
-      if (uid == null) return; // Games/Learn screens are auth-gated at the router; defensive only.
+      if (uid == null)
+        return; // Games/Learn screens are auth-gated at the router; defensive only.
       try {
         await MessageRepository.instance.recordQuizAttempt(
           uid: uid,
@@ -70,16 +72,19 @@ class _QuizScreenState extends State<QuizScreen> {
             curve: Curves.easeOutCubic,
             builder: (context, value, child) => Opacity(
               opacity: value,
-              child: Transform.scale(scale: 0.94 + (0.06 * value), child: child),
+              child:
+                  Transform.scale(scale: 0.94 + (0.06 * value), child: child),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(CupertinoIcons.rosette, size: 64, color: AppColors.primary),
+                const Icon(CupertinoIcons.rosette,
+                    size: 64, color: AppColors.primary),
                 const SizedBox(height: 16),
                 Text(
                   'You scored $_score / ${widget.questions.length}',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -98,7 +103,9 @@ class _QuizScreenState extends State<QuizScreen> {
     final correctIndex = question['correctIndex'] as int;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Question ${_currentIndex + 1} / ${widget.questions.length}')),
+      appBar: AppBar(
+          title: Text(
+              'Question ${_currentIndex + 1} / ${widget.questions.length}')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -136,7 +143,8 @@ class _QuizScreenState extends State<QuizScreen> {
                     decoration: BoxDecoration(
                       color: color ?? AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                      border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       children: [
@@ -156,7 +164,9 @@ class _QuizScreenState extends State<QuizScreen> {
               ElevatedButton(
                 onPressed: _next,
                 child: Text(
-                  _currentIndex + 1 < widget.questions.length ? 'Next' : 'Finish',
+                  _currentIndex + 1 < widget.questions.length
+                      ? 'Next'
+                      : 'Finish',
                 ),
               ),
           ],

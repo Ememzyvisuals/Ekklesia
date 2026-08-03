@@ -13,14 +13,17 @@ class BookmarkRepository {
   BookmarkRepository._internal();
   static final BookmarkRepository instance = BookmarkRepository._internal();
 
-  final _collection = FirebaseFirestore.instance.collection(AppConfig.bookmarksCollection);
+  final _collection =
+      FirebaseFirestore.instance.collection(AppConfig.bookmarksCollection);
 
   Stream<List<BookmarkItem>> watchAll(String uid) {
     return _collection
         .where('uid', isEqualTo: uid)
         .orderBy('created_at', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => BookmarkItem.fromFirestore(d.id, d.data())).toList());
+        .map((snap) => snap.docs
+            .map((d) => BookmarkItem.fromFirestore(d.id, d.data()))
+            .toList());
   }
 
   /// One-shot lookup for a single bookmark button's initial state —
@@ -28,7 +31,9 @@ class BookmarkRepository {
   /// sermon library) subscribing to the whole bookmarks collection just
   /// to know if its one item is saved.
   Future<bool> isBookmarked(String uid, BookmarkType type, String refId) async {
-    final doc = await _collection.doc(BookmarkItem.deterministicId(uid, type, refId)).get();
+    final doc = await _collection
+        .doc(BookmarkItem.deterministicId(uid, type, refId))
+        .get();
     return doc.exists;
   }
 

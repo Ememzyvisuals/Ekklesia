@@ -22,7 +22,8 @@ class BibleAudioCache {
   BibleAudioCache(this.isar);
   final Isar isar;
 
-  static String hashFor(String text) => sha256.convert(utf8.encode(text)).toString();
+  static String hashFor(String text) =>
+      sha256.convert(utf8.encode(text)).toString();
 
   Future<Directory> _cacheDir() async {
     final docs = await getApplicationDocumentsDirectory();
@@ -55,7 +56,8 @@ class BibleAudioCache {
   }
 
   AudioSource sourceFor(String name) {
-    return AudioSource.values.firstWhere((s) => s.name == name, orElse: () => AudioSource.wazobiaVoice);
+    return AudioSource.values.firstWhere((s) => s.name == name,
+        orElse: () => AudioSource.wazobiaVoice);
   }
 
   /// Downloads each chunk's remote TTS audio to a local file and records
@@ -71,7 +73,8 @@ class BibleAudioCache {
     required List<TtsResult> chunks,
   }) async {
     if (chunks.isEmpty) {
-      throw Exception('Cannot cache zero audio chunks for $bookCode $chapter ($language).');
+      throw Exception(
+          'Cannot cache zero audio chunks for $bookCode $chapter ($language).');
     }
     final dir = await _cacheDir();
     final paths = <String>[];
@@ -80,9 +83,11 @@ class BibleAudioCache {
     for (var i = 0; i < chunks.length; i++) {
       final response = await http.get(Uri.parse(chunks[i].audioUrl));
       if (response.statusCode != 200) {
-        throw Exception('Failed to download TTS audio chunk $i for caching (${response.statusCode}).');
+        throw Exception(
+            'Failed to download TTS audio chunk $i for caching (${response.statusCode}).');
       }
-      final file = File('${dir.path}/${language}_${bookCode}_${chapter}_$i.mp3');
+      final file =
+          File('${dir.path}/${language}_${bookCode}_${chapter}_$i.mp3');
       await file.writeAsBytes(response.bodyBytes);
       paths.add(file.path);
       totalBytes += response.bodyBytes.length;
@@ -146,7 +151,9 @@ class BibleAudioCache {
   Future<void> pruneOrphaned() async {
     final dir = await _cacheDir();
     final allEntries = await isar.bibleAudioCacheEntitys.where().findAll();
-    final referencedPaths = <String>{for (final e in allEntries) ...e.chunkPaths};
+    final referencedPaths = <String>{
+      for (final e in allEntries) ...e.chunkPaths
+    };
 
     if (await dir.exists()) {
       await for (final entity in dir.list()) {
@@ -173,7 +180,8 @@ class BibleAudioCache {
       if (anyMissing) staleIds.add(e.id);
     }
     if (staleIds.isNotEmpty) {
-      await isar.writeTxn(() => isar.bibleAudioCacheEntitys.deleteAll(staleIds));
+      await isar
+          .writeTxn(() => isar.bibleAudioCacheEntitys.deleteAll(staleIds));
     }
   }
 

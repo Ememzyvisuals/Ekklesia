@@ -18,21 +18,29 @@ void main() {
 
   test('every ARB file is valid JSON', () {
     for (final lang in languages) {
-      expect(() => loadArb(lang), returnsNormally, reason: 'app_$lang.arb failed to parse as JSON');
+      expect(() => loadArb(lang), returnsNormally,
+          reason: 'app_$lang.arb failed to parse as JSON');
     }
   });
 
-  test('every language has exactly the same translation keys as the template', () {
-    final templateKeys = loadArb(templateLanguage).keys.where((k) => !k.startsWith('@')).toSet();
-    expect(templateKeys, isNotEmpty, reason: 'Template ARB appears empty — check the test is finding the right file.');
+  test('every language has exactly the same translation keys as the template',
+      () {
+    final templateKeys =
+        loadArb(templateLanguage).keys.where((k) => !k.startsWith('@')).toSet();
+    expect(templateKeys, isNotEmpty,
+        reason:
+            'Template ARB appears empty — check the test is finding the right file.');
 
     for (final lang in languages) {
       if (lang == templateLanguage) continue;
       final keys = loadArb(lang).keys.where((k) => !k.startsWith('@')).toSet();
       final missing = templateKeys.difference(keys);
       final extra = keys.difference(templateKeys);
-      expect(missing, isEmpty, reason: 'app_$lang.arb is missing keys present in the template: $missing');
-      expect(extra, isEmpty, reason: 'app_$lang.arb has keys not present in the template: $extra');
+      expect(missing, isEmpty,
+          reason:
+              'app_$lang.arb is missing keys present in the template: $missing');
+      expect(extra, isEmpty,
+          reason: 'app_$lang.arb has keys not present in the template: $extra');
     }
   });
 
@@ -53,7 +61,8 @@ void main() {
   test('@@locale matches the filename for every ARB file', () {
     for (final lang in languages) {
       final data = loadArb(lang);
-      expect(data['@@locale'], lang, reason: 'app_$lang.arb\'s @@locale doesn\'t match its filename');
+      expect(data['@@locale'], lang,
+          reason: 'app_$lang.arb\'s @@locale doesn\'t match its filename');
     }
   });
 }

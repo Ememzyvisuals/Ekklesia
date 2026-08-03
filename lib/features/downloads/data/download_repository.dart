@@ -23,12 +23,15 @@ class DownloadRepository {
     final raw = prefs.getString(_storageKey);
     if (raw == null) return [];
     final list = jsonDecode(raw) as List<dynamic>;
-    return list.map((e) => DownloadTask.fromJson(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => DownloadTask.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> saveAll(List<DownloadTask> tasks) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_storageKey, jsonEncode(tasks.map((t) => t.toJson()).toList()));
+    await prefs.setString(
+        _storageKey, jsonEncode(tasks.map((t) => t.toJson()).toList()));
   }
 
   Future<void> upsert(DownloadTask task) async {

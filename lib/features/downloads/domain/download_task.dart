@@ -65,6 +65,7 @@ class DownloadTask {
         downloadedBytes: json['downloaded_bytes'] as int? ?? 0,
         expectedSha256: json['expected_sha256'] as String?,
         errorMessage: json['error_message'] as String?,
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+            DateTime.now(),
       );
 }

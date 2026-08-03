@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart' hide PlayerState;
+import 'package:youtube_player_flutter/youtube_player_flutter.dart'
+    hide PlayerState;
 
 import '../../../core/services/radio_service.dart';
 import '../../../core/config/app_theme.dart';
@@ -47,7 +48,8 @@ class _LiveScreenState extends State<LiveScreen> {
       _error = null;
     });
     try {
-      if (_isPlaying && RadioService.instance.currentLanguage == _selectedLanguage) {
+      if (_isPlaying &&
+          RadioService.instance.currentLanguage == _selectedLanguage) {
         await RadioService.instance.pause();
         setState(() => _isPlaying = false);
       } else {
@@ -88,9 +90,11 @@ class _LiveScreenState extends State<LiveScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(CupertinoIcons.video_camera, color: AppTheme.textSecondary(context)),
+                      Icon(CupertinoIcons.video_camera,
+                          color: AppTheme.textSecondary(context)),
                       const SizedBox(width: 8),
-                      const Expanded(child: Text('No live YouTube stream right now.')),
+                      const Expanded(
+                          child: Text('No live YouTube stream right now.')),
                     ],
                   ),
                 );
@@ -100,7 +104,8 @@ class _LiveScreenState extends State<LiveScreen> {
                 _ytController?.dispose();
                 _ytController = YoutubePlayerController(
                   initialVideoId: live.videoId,
-                  flags: const YoutubePlayerFlags(autoPlay: false, isLive: true),
+                  flags:
+                      const YoutubePlayerFlags(autoPlay: false, isLive: true),
                 );
                 _controllerVideoId = live.videoId;
               }
@@ -108,11 +113,13 @@ class _LiveScreenState extends State<LiveScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Live Now', style: Theme.of(context).textTheme.headlineMedium),
+                  Text('Live Now',
+                      style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 8),
                   YoutubePlayer(controller: _ytController!),
                   const SizedBox(height: 8),
-                  Text(live.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(live.title,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 24),
                 ],
               );
@@ -165,7 +172,10 @@ class _LiveScreenState extends State<LiveScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [AppColors.primary, Color.lerp(AppColors.primary, Colors.black, 0.3)!],
+                colors: [
+                  AppColors.primary,
+                  Color.lerp(AppColors.primary, Colors.black, 0.3)!
+                ],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -181,7 +191,9 @@ class _LiveScreenState extends State<LiveScreen> {
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
                   child: Text(
-                    _isPlaying ? 'Now Playing — ${_label(_selectedLanguage)}' : 'Tap to Play',
+                    _isPlaying
+                        ? 'Now Playing — ${_label(_selectedLanguage)}'
+                        : 'Tap to Play',
                     key: ValueKey(_isPlaying),
                     style: const TextStyle(
                       color: Colors.white,
@@ -194,7 +206,8 @@ class _LiveScreenState extends State<LiveScreen> {
                 StreamBuilder<PlayerState>(
                   stream: RadioService.instance.stateStream,
                   builder: (context, snapshot) {
-                    final buffering = snapshot.data?.processingState == ProcessingState.buffering;
+                    final buffering = snapshot.data?.processingState ==
+                        ProcessingState.buffering;
                     final showSpinner = buffering || _loading;
                     // A tasteful, restrained tap animation — scales down
                     // slightly on press, back to full size on release —
@@ -228,24 +241,30 @@ class _LiveScreenState extends State<LiveScreen> {
                                 padding: const EdgeInsets.only(top: 16),
                                 child: Column(
                                   children: [
-                                    const Divider(color: Colors.white24, height: 1),
+                                    const Divider(
+                                        color: Colors.white24, height: 1),
                                     const SizedBox(height: 12),
                                     Text(
                                       '${info.title} — ${info.artist}',
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 13),
                                     ),
                                     const SizedBox(height: 4),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        const Icon(CupertinoIcons.person_2_fill, size: 13, color: Colors.white70),
+                                        const Icon(CupertinoIcons.person_2_fill,
+                                            size: 13, color: Colors.white70),
                                         const SizedBox(width: 4),
                                         Text(
                                           '${info.listeners} listening now',
-                                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                          style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 12),
                                         ),
                                       ],
                                     ),
@@ -287,7 +306,10 @@ class _LiveScreenState extends State<LiveScreen> {
 /// spinner states — deliberately not a bounce, spin, or pulse, matching
 /// this app's "smooth, not over-animated" direction elsewhere.
 class _PremiumPlayButton extends StatefulWidget {
-  const _PremiumPlayButton({required this.onTap, required this.isPlaying, required this.showSpinner});
+  const _PremiumPlayButton(
+      {required this.onTap,
+      required this.isPlaying,
+      required this.showSpinner});
   final VoidCallback? onTap;
   final bool isPlaying;
   final bool showSpinner;
@@ -302,9 +324,12 @@ class _PremiumPlayButtonState extends State<_PremiumPlayButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: widget.onTap == null ? null : (_) => setState(() => _pressed = true),
-      onTapUp: widget.onTap == null ? null : (_) => setState(() => _pressed = false),
-      onTapCancel: widget.onTap == null ? null : () => setState(() => _pressed = false),
+      onTapDown:
+          widget.onTap == null ? null : (_) => setState(() => _pressed = true),
+      onTapUp:
+          widget.onTap == null ? null : (_) => setState(() => _pressed = false),
+      onTapCancel:
+          widget.onTap == null ? null : () => setState(() => _pressed = false),
       onTap: widget.onTap,
       child: AnimatedScale(
         scale: _pressed ? 0.92 : 1.0,
@@ -317,7 +342,10 @@ class _PremiumPlayButtonState extends State<_PremiumPlayButton> {
             shape: BoxShape.circle,
             color: Colors.white,
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 16, offset: const Offset(0, 6)),
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6)),
             ],
           ),
           child: Center(
@@ -328,10 +356,13 @@ class _PremiumPlayButtonState extends State<_PremiumPlayButton> {
                       key: ValueKey('spinner'),
                       height: 28,
                       width: 28,
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2.5, color: AppColors.primary),
                     )
                   : Icon(
-                      widget.isPlaying ? CupertinoIcons.pause_solid : CupertinoIcons.play_fill,
+                      widget.isPlaying
+                          ? CupertinoIcons.pause_solid
+                          : CupertinoIcons.play_fill,
                       key: ValueKey(widget.isPlaying),
                       color: AppColors.primary,
                       size: 32,

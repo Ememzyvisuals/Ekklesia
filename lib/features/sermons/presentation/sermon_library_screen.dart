@@ -8,7 +8,14 @@ import '../domain/video_entry.dart';
 import 'video_player_screen.dart';
 
 const List<String> _categories = [
-  'All', 'Sunday Service', 'Bible Study', 'Revival', 'GCK', 'Impact Academy', 'Special Messages', 'Programs',
+  'All',
+  'Sunday Service',
+  'Bible Study',
+  'Revival',
+  'GCK',
+  'Impact Academy',
+  'Special Messages',
+  'Programs',
 ];
 
 class SermonLibraryScreen extends StatefulWidget {
@@ -18,7 +25,8 @@ class SermonLibraryScreen extends StatefulWidget {
   State<SermonLibraryScreen> createState() => _SermonLibraryScreenState();
 }
 
-class _SermonLibraryScreenState extends State<SermonLibraryScreen> with SingleTickerProviderStateMixin {
+class _SermonLibraryScreenState extends State<SermonLibraryScreen>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   final _repository = YoutubeRepository();
   Result<List<VideoEntry>> _result = const Result.loading();
@@ -36,12 +44,14 @@ class _SermonLibraryScreenState extends State<SermonLibraryScreen> with SingleTi
   Future<void> _load() async {
     setState(() => _result = const Result.loading());
     final category = _categories[_tabController.index];
-    final result = await _repository.getCachedUploads(category: category == 'All' ? null : category);
+    final result = await _repository.getCachedUploads(
+        category: category == 'All' ? null : category);
     if (mounted) setState(() => _result = result);
   }
 
   Future<void> _pullToRefresh() async {
-    await _repository.refresh(); // real API pull, not just re-reading the same cache
+    await _repository
+        .refresh(); // real API pull, not just re-reading the same cache
     await _load();
   }
 
@@ -66,10 +76,10 @@ class _SermonLibraryScreenState extends State<SermonLibraryScreen> with SingleTi
         onRefresh: _pullToRefresh,
         child: switch (_result) {
           ResultLoading() => const Center(child: CircularProgressIndicator()),
-          ResultFailure(failure: final f) => _ErrorState(message: f.message, onRetry: _load),
-          ResultSuccess(data: final videos) => videos.isEmpty
-              ? const _EmptyState()
-              : _VideoList(videos: videos),
+          ResultFailure(failure: final f) =>
+            _ErrorState(message: f.message, onRetry: _load),
+          ResultSuccess(data: final videos) =>
+            videos.isEmpty ? const _EmptyState() : _VideoList(videos: videos),
         },
       ),
     );
@@ -85,13 +95,15 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(32),
       children: [
         const SizedBox(height: 60),
-        Icon(Icons.church_outlined, size: 48, color: AppTheme.textSecondary(context)),
+        Icon(Icons.church_outlined,
+            size: 48, color: AppTheme.textSecondary(context)),
         const SizedBox(height: 16),
         Center(
           child: Text(
             'No messages here yet — pull down to check for new uploads.',
             textAlign: TextAlign.center,
-            style: AppTypography.bodyMedium(color: AppTheme.textSecondary(context)),
+            style: AppTypography.bodyMedium(
+                color: AppTheme.textSecondary(context)),
           ),
         ),
       ],
@@ -114,7 +126,9 @@ class _ErrorState extends StatelessWidget {
         const SizedBox(height: 16),
         Center(child: Text(message, textAlign: TextAlign.center)),
         const SizedBox(height: 16),
-        Center(child: ElevatedButton(onPressed: onRetry, child: const Text('Retry'))),
+        Center(
+            child:
+                ElevatedButton(onPressed: onRetry, child: const Text('Retry'))),
       ],
     );
   }
@@ -152,22 +166,36 @@ class _VideoList extends StatelessWidget {
                       CachedNetworkImage(
                         imageUrl: video.thumbnailUrl,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(color: AppColors.secondary),
-                        errorWidget: (_, __, ___) => Container(color: AppColors.secondary),
+                        placeholder: (_, __) =>
+                            Container(color: AppColors.secondary),
+                        errorWidget: (_, __, ___) =>
+                            Container(color: AppColors.secondary),
                       ),
                       if (video.liveStatus == LiveStatus.live)
-                        Positioned(top: 8, left: 8, child: _tag('LIVE', AppColors.error)),
+                        Positioned(
+                            top: 8,
+                            left: 8,
+                            child: _tag('LIVE', AppColors.error)),
                       if (video.durationSeconds != null)
-                        Positioned(bottom: 8, right: 8, child: _tag(_formatDuration(video.durationSeconds!), Colors.black87)),
+                        Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: _tag(_formatDuration(video.durationSeconds!),
+                                Colors.black87)),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 8),
-              Text(video.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: AppTypography.titleSmall(color: AppTheme.textPrimary(context))),
+              Text(video.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleSmall(
+                      color: AppTheme.textPrimary(context))),
               const SizedBox(height: 2),
-              Text(video.category ?? 'Programs', style: AppTypography.bodySmall(color: AppTheme.textSecondary(context))),
+              Text(video.category ?? 'Programs',
+                  style: AppTypography.bodySmall(
+                      color: AppTheme.textSecondary(context))),
             ],
           ),
         );
@@ -177,15 +205,21 @@ class _VideoList extends StatelessWidget {
 
   Widget _tag(String text, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
-        child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+        decoration:
+            BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+        child: Text(text,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600)),
       );
 
   String _formatDuration(int seconds) {
     final h = seconds ~/ 3600;
     final m = (seconds % 3600) ~/ 60;
     final s = seconds % 60;
-    if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    if (h > 0)
+      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
     return '$m:${s.toString().padLeft(2, '0')}';
   }
 }

@@ -10,11 +10,8 @@ import '../../../core/services/download_worker.dart';
 import '../../../core/shared/result.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../ai/data/conversation_repository.dart';
-import '../../ai/domain/conversation.dart';
 import '../../bible/data/bible_providers.dart';
 import '../../bookmarks/data/bookmark_repository.dart';
-import '../../bookmarks/domain/bookmark_item.dart';
-import '../../downloads/domain/download_task.dart';
 import '../../sermons/data/youtube_repository.dart';
 import '../../sermons/domain/video_entry.dart';
 import '../../sermons/presentation/video_player_screen.dart';
@@ -45,10 +42,21 @@ class SearchScreen extends ConsumerStatefulWidget {
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-enum _SearchSourceType { sermon, bookmark, download, aiConversation, settingsShortcut, bible }
+enum _SearchSourceType {
+  sermon,
+  bookmark,
+  download,
+  aiConversation,
+  settingsShortcut,
+  bible
+}
 
 class _SearchResult {
-  _SearchResult({required this.type, required this.title, required this.subtitle, this.payload});
+  _SearchResult(
+      {required this.type,
+      required this.title,
+      required this.subtitle,
+      this.payload});
   final _SearchSourceType type;
   final String title;
   final String subtitle;
@@ -71,7 +79,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   void _onChanged(String query) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), () => _search(query.trim()));
+    _debounce =
+        Timer(const Duration(milliseconds: 350), () => _search(query.trim()));
   }
 
   Future<void> _search(String query) async {
@@ -88,8 +97,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final sermonsResult = await YoutubeRepository().getCachedUploads();
     if (sermonsResult case ResultSuccess(data: final videos)) {
       for (final v in videos) {
-        if (v.title.toLowerCase().contains(needle) || v.description.toLowerCase().contains(needle)) {
-          results.add(_SearchResult(type: _SearchSourceType.sermon, title: v.title, subtitle: v.channelTitle, payload: v));
+        if (v.title.toLowerCase().contains(needle) ||
+            v.description.toLowerCase().contains(needle)) {
+          results.add(_SearchResult(
+              type: _SearchSourceType.sermon,
+              title: v.title,
+              subtitle: v.channelTitle,
+              payload: v));
         }
       }
     }
@@ -98,10 +112,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (uid != null) {
       // Bookmarks
       try {
-        final bookmarks = await BookmarkRepository.instance.watchAll(uid).first.timeout(const Duration(seconds: 5));
+        final bookmarks = await BookmarkRepository.instance
+            .watchAll(uid)
+            .first
+            .timeout(const Duration(seconds: 5));
         for (final b in bookmarks) {
-          if (b.title.toLowerCase().contains(needle) || b.subtitle.toLowerCase().contains(needle)) {
-            results.add(_SearchResult(type: _SearchSourceType.bookmark, title: b.title, subtitle: b.subtitle, payload: b));
+          if (b.title.toLowerCase().contains(needle) ||
+              b.subtitle.toLowerCase().contains(needle)) {
+            results.add(_SearchResult(
+                type: _SearchSourceType.bookmark,
+                title: b.title,
+                subtitle: b.subtitle,
+                payload: b));
           }
         }
       } catch (_) {
@@ -111,11 +133,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
       // AI Conversations
       try {
-        final messages = await ConversationRepository.instance.search(uid, query);
+        final messages =
+            await ConversationRepository.instance.search(uid, query);
         for (final m in messages) {
           results.add(_SearchResult(
             type: _SearchSourceType.aiConversation,
-            title: m.text.length > 80 ? '${m.text.substring(0, 77)}...' : m.text,
+            title:
+                m.text.length > 80 ? '${m.text.substring(0, 77)}...' : m.text,
             subtitle: m.role == 'user' ? 'You asked' : 'AI replied',
             payload: m,
           ));
@@ -144,7 +168,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       final downloads = await DownloadWorker.instance.getAll();
       for (final d in downloads) {
         if (d.title.toLowerCase().contains(needle)) {
-          results.add(_SearchResult(type: _SearchSourceType.download, title: d.title, subtitle: 'Download', payload: d));
+          results.add(_SearchResult(
+              type: _SearchSourceType.download,
+              title: d.title,
+              subtitle: 'Download',
+              payload: d));
         }
       }
     } catch (_) {}
@@ -152,17 +180,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     // Settings shortcuts
     for (final (label, route) in _settingsShortcuts) {
       if (label.toLowerCase().contains(needle)) {
-        results.add(_SearchResult(type: _SearchSourceType.settingsShortcut, title: label, subtitle: 'Settings', payload: route));
+        results.add(_SearchResult(
+            type: _SearchSourceType.settingsShortcut,
+            title: label,
+            subtitle: 'Settings',
+            payload: route));
       }
     }
 
-    if (mounted) setState(() { _results = results; _loading = false; });
+    if (mounted)
+      setState(() {
+        _results = results;
+        _loading = false;
+      });
   }
 
   void _open(_SearchResult result) {
     switch (result.type) {
       case _SearchSourceType.sermon:
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => VideoPlayerScreen(video: result.payload as VideoEntry)));
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) =>
+                VideoPlayerScreen(video: result.payload as VideoEntry)));
         break;
       case _SearchSourceType.bookmark:
         context.push('/bookmarks');
@@ -214,7 +252,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           controller: _controller,
           autofocus: true,
           decoration: InputDecoration(
-            hintText: AppLocalizations.of(context)!.searchHint,
+            hintText: AppLocalizations.of(context).searchHint,
             border: InputBorder.none,
           ),
           onChanged: _onChanged,
@@ -227,23 +265,29 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
-                      AppLocalizations.of(context)!.searchEmptyPrompt,
+                      AppLocalizations.of(context).searchEmptyPrompt,
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                 )
               : _results.isEmpty
-                  ? Center(child: Text(AppLocalizations.of(context)!.searchNoResults, style: const TextStyle(color: AppColors.textSecondary)))
+                  ? Center(
+                      child: Text(AppLocalizations.of(context).searchNoResults,
+                          style:
+                              const TextStyle(color: AppColors.textSecondary)))
                   : ListView.separated(
                       itemCount: _results.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final r = _results[index];
                         return ListTile(
-                          leading: Icon(_iconFor(r.type), color: AppColors.accent),
-                          title: Text(r.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          subtitle: Text(r.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          leading:
+                              Icon(_iconFor(r.type), color: AppColors.accent),
+                          title: Text(r.title,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(r.subtitle,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
                           onTap: () => _open(r),
                         );
                       },

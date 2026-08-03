@@ -39,7 +39,10 @@ class BibleTTSQueue {
     required String text,
     required EkklesiaLanguage language,
   }) async* {
-    final chunkTexts = TtsService.instance.chunkText(text).where((c) => c.trim().isNotEmpty).toList();
+    final chunkTexts = TtsService.instance
+        .chunkText(text)
+        .where((c) => c.trim().isNotEmpty)
+        .toList();
     if (chunkTexts.isEmpty) return;
 
     // One in-flight Future per chunk, started eagerly up to the
@@ -59,9 +62,11 @@ class BibleTTSQueue {
     var started = 0;
 
     void fillPending(int served) {
-      while (started < chunkTexts.length && started < served + prefetchDepth + 1) {
+      while (
+          started < chunkTexts.length && started < served + prefetchDepth + 1) {
         pending.add(
-          TtsService.instance.synthesizeWithRetry(text: chunkTexts[started], language: language),
+          TtsService.instance.synthesizeWithRetry(
+              text: chunkTexts[started], language: language),
         );
         started++;
       }

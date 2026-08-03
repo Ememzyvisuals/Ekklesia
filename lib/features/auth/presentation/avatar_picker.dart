@@ -30,7 +30,8 @@ class AvatarView extends StatelessWidget {
   }
 
   Widget _svgFallback(BuildContext context) {
-    final option = AvatarService.instance.byId(avatarId ?? '') ?? AvatarService.instance.catalog.first;
+    final option = AvatarService.instance.byId(avatarId ?? '') ??
+        AvatarService.instance.catalog.first;
     return ClipOval(
       child: SvgPicture.asset(
         option.assetPath,
@@ -48,7 +49,11 @@ class AvatarView extends StatelessWidget {
 /// every avatar stays tappable — gender-matching is a sensible default, not
 /// a restriction.
 class AvatarPicker extends StatefulWidget {
-  const AvatarPicker({super.key, required this.onSelected, this.initialGender, this.selectedId});
+  const AvatarPicker(
+      {super.key,
+      required this.onSelected,
+      this.initialGender,
+      this.selectedId});
 
   final ValueChanged<AvatarOption> onSelected;
   final AvatarGender? initialGender;
@@ -77,7 +82,8 @@ class _AvatarPickerState extends State<AvatarPicker> {
         SegmentedButton<AvatarGender>(
           segments: const [
             ButtonSegment(value: AvatarGender.male, label: Text('Male style')),
-            ButtonSegment(value: AvatarGender.female, label: Text('Female style')),
+            ButtonSegment(
+                value: AvatarGender.female, label: Text('Female style')),
           ],
           selected: {_filter},
           onSelectionChanged: (s) => setState(() => _filter = s.first),

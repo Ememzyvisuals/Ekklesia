@@ -6,8 +6,21 @@ import '../../../core/config/app_theme.dart';
 import '../data/avatar_service.dart';
 import 'avatar_picker.dart';
 
-const List<String> _ageRanges = ['Under 18', '18-24', '25-34', '35-44', '45-54', '55+'];
-const List<String> _languages = ['English', 'Yoruba', 'Hausa', 'Igbo', 'Nigerian Pidgin'];
+const List<String> _ageRanges = [
+  'Under 18',
+  '18-24',
+  '25-34',
+  '35-44',
+  '45-54',
+  '55+'
+];
+const List<String> _languages = [
+  'English',
+  'Yoruba',
+  'Hausa',
+  'Igbo',
+  'Nigerian Pidgin'
+];
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -50,7 +63,8 @@ class _SignupScreenState extends State<SignupScreen> {
         displayName: _nameController.text.trim(),
         gender: _gender,
         ageRange: _ageRange,
-        preferredLanguage: _preferredLanguage.toLowerCase().replaceAll(' ', '_'),
+        preferredLanguage:
+            _preferredLanguage.toLowerCase().replaceAll(' ', '_'),
         bio: _bioController.text.trim(),
         avatarId: _selectedAvatarId,
         // No photo upload flow yet — user either picked a default avatar
@@ -76,51 +90,67 @@ class _SignupScreenState extends State<SignupScreen> {
           children: [
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Name', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Email', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Password', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 20),
-            Text('Gender', style: AppTypography.titleSmall(color: AppTheme.textPrimary(context))),
+            Text('Gender',
+                style: AppTypography.titleSmall(
+                    color: AppTheme.textPrimary(context))),
             const SizedBox(height: 8),
             SegmentedButton<AvatarGender>(
               segments: const [
                 ButtonSegment(value: AvatarGender.male, label: Text('Male')),
-                ButtonSegment(value: AvatarGender.female, label: Text('Female')),
+                ButtonSegment(
+                    value: AvatarGender.female, label: Text('Female')),
               ],
               selected: {_gender},
               onSelectionChanged: (s) => setState(() {
                 _gender = s.first;
-                _selectedAvatarId = null; // avatar catalog is gender-filtered; clear stale pick
+                _selectedAvatarId =
+                    null; // avatar catalog is gender-filtered; clear stale pick
               }),
             ),
             const SizedBox(height: 20),
-            Text('Age group', style: AppTypography.titleSmall(color: AppTheme.textPrimary(context))),
+            Text('Age group',
+                style: AppTypography.titleSmall(
+                    color: AppTheme.textPrimary(context))),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _ageRange,
               decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: _ageRanges.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+              items: _ageRanges
+                  .map((a) => DropdownMenuItem(value: a, child: Text(a)))
+                  .toList(),
               onChanged: (v) => setState(() => _ageRange = v ?? _ageRange),
             ),
             const SizedBox(height: 20),
-            Text('Preferred language', style: AppTypography.titleSmall(color: AppTheme.textPrimary(context))),
+            Text('Preferred language',
+                style: AppTypography.titleSmall(
+                    color: AppTheme.textPrimary(context))),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _preferredLanguage,
               decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: _languages.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
-              onChanged: (v) => setState(() => _preferredLanguage = v ?? _preferredLanguage),
+              items: _languages
+                  .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _preferredLanguage = v ?? _preferredLanguage),
             ),
             const SizedBox(height: 20),
             TextField(
@@ -133,17 +163,20 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 24),
             Text('Choose an avatar (optional)',
-                style: AppTypography.titleSmall(color: AppTheme.textPrimary(context))),
+                style: AppTypography.titleSmall(
+                    color: AppTheme.textPrimary(context))),
             const SizedBox(height: 4),
             Text(
               'Skip this and we\'ll assign one automatically.',
-              style: AppTypography.bodySmall(color: AppTheme.textSecondary(context)),
+              style: AppTypography.bodySmall(
+                  color: AppTheme.textSecondary(context)),
             ),
             const SizedBox(height: 12),
             AvatarPicker(
               initialGender: _gender,
               selectedId: _selectedAvatarId,
-              onSelected: (option) => setState(() => _selectedAvatarId = option.id),
+              onSelected: (option) =>
+                  setState(() => _selectedAvatarId = option.id),
             ),
             const SizedBox(height: 20),
             if (_error != null)
@@ -155,8 +188,10 @@ class _SignupScreenState extends State<SignupScreen> {
               onPressed: _loading ? null : _signUp,
               child: _loading
                   ? const SizedBox(
-                      height: 18, width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : const Text('Sign Up'),
             ),

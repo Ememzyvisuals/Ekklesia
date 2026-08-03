@@ -90,7 +90,9 @@ class NotificationWorker {
   static const _dedupeWindow = Duration(seconds: 30);
 
   Stream<List<CategorizedNotification>> stream(String uid) {
-    return NotificationService.instance.notificationsForUser(uid).map((snapshot) {
+    return NotificationService.instance
+        .notificationsForUser(uid)
+        .map((snapshot) {
       final now = DateTime.now();
       final result = <CategorizedNotification>[];
       for (final doc in snapshot.docs) {

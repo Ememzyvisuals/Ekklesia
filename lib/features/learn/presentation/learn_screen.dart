@@ -34,7 +34,8 @@ class _LearnScreenState extends State<LearnScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final messages = await MessageRepository.instance.getByCategory(_category);
+      final messages =
+          await MessageRepository.instance.getByCategory(_category);
       setState(() => _messages = messages);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -52,7 +53,9 @@ class _LearnScreenState extends State<LearnScreen> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+                ? Center(
+                    child: Text(_error!,
+                        style: const TextStyle(color: Colors.red)))
                 : _messages.isEmpty
                     ? const Center(
                         child: Padding(
@@ -68,7 +71,8 @@ class _LearnScreenState extends State<LearnScreen> {
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: _messages.length,
-                        itemBuilder: (context, index) => _MessageTile(message: _messages[index]),
+                        itemBuilder: (context, index) =>
+                            _MessageTile(message: _messages[index]),
                       ),
       ),
     );
@@ -100,18 +104,22 @@ class _MessageTileState extends State<_MessageTile> {
     setState(() => _generating = true);
     try {
       if (_summary == null) {
-        final summary = await GroqService.instance.summarizeMessage(widget.message.transcript);
-        await MessageRepository.instance.saveSummary(widget.message.id, summary);
+        final summary = await GroqService.instance
+            .summarizeMessage(widget.message.transcript);
+        await MessageRepository.instance
+            .saveSummary(widget.message.id, summary);
         setState(() => _summary = summary);
       }
       if (_quiz == null) {
-        final quizJson = await GroqService.instance.generateQuiz(widget.message.transcript);
+        final quizJson =
+            await GroqService.instance.generateQuiz(widget.message.transcript);
         final parsed = GroqService.instance.parseQuizJson(quizJson);
         await MessageRepository.instance.saveQuiz(widget.message.id, parsed);
         setState(() => _quiz = parsed);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       setState(() => _generating = false);
     }
@@ -129,7 +137,8 @@ class _MessageTileState extends State<_MessageTile> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ListTile(
-            title: Text(widget.message.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(widget.message.title,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             trailing: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
             onTap: () => setState(() => _expanded = !_expanded),
           ),
@@ -140,7 +149,8 @@ class _MessageTileState extends State<_MessageTile> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (_summary != null) ...[
-                    const Text('Summary', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const Text('Summary',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Text(_summary!),
                     const SizedBox(height: 12),

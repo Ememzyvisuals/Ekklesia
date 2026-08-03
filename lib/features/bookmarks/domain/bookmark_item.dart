@@ -70,7 +70,8 @@ class BookmarkItem {
   static String deterministicId(String uid, BookmarkType type, String refId) =>
       '${uid}_${type.wireName}_$refId';
 
-  factory BookmarkItem.fromFirestore(String id, Map<String, dynamic> data) => BookmarkItem(
+  factory BookmarkItem.fromFirestore(String id, Map<String, dynamic> data) =>
+      BookmarkItem(
         id: id,
         uid: data['uid'] as String,
         type: BookmarkTypeName.fromWireName(data['type'] as String? ?? 'bible'),

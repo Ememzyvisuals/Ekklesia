@@ -47,7 +47,8 @@ class _BookmarkButtonState extends State<BookmarkButton> {
       setState(() => _isBookmarked = false);
       return;
     }
-    final saved = await BookmarkRepository.instance.isBookmarked(uid, widget.type, widget.refId);
+    final saved = await BookmarkRepository.instance
+        .isBookmarked(uid, widget.type, widget.refId);
     if (mounted) setState(() => _isBookmarked = saved);
   }
 
@@ -74,7 +75,8 @@ class _BookmarkButtonState extends State<BookmarkButton> {
       ));
       if (mounted) setState(() => _isBookmarked = nowSaved);
     } catch (_) {
-      if (mounted) setState(() => _isBookmarked = previous); // revert on failure
+      if (mounted)
+        setState(() => _isBookmarked = previous); // revert on failure
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -84,7 +86,8 @@ class _BookmarkButtonState extends State<BookmarkButton> {
   Widget build(BuildContext context) {
     if (_isBookmarked == null) {
       return const SizedBox(
-        width: 24, height: 24,
+        width: 24,
+        height: 24,
         child: Padding(
           padding: EdgeInsets.all(8.0),
           child: CircularProgressIndicator(strokeWidth: 2),

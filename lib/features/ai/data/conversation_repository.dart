@@ -9,11 +9,13 @@ import '../domain/conversation.dart';
 /// directly for reads and immediate best-effort writes.
 class ConversationRepository {
   ConversationRepository._internal();
-  static final ConversationRepository instance = ConversationRepository._internal();
+  static final ConversationRepository instance =
+      ConversationRepository._internal();
 
   final _collection = FirebaseFirestore.instance.collection('ai_conversations');
 
-  Stream<List<ConversationMessage>> sessionMessages(String uid, String sessionId) {
+  Stream<List<ConversationMessage>> sessionMessages(
+      String uid, String sessionId) {
     return _collection
         .where('uid', isEqualTo: uid)
         .where('session_id', isEqualTo: sessionId)
@@ -26,13 +28,16 @@ class ConversationRepository {
 
   /// All of a user's sessions, most-recent message first per session —
   /// used for the conversation history list and as the search corpus.
-  Future<List<ConversationMessage>> allMessages(String uid, {int limit = 500}) async {
+  Future<List<ConversationMessage>> allMessages(String uid,
+      {int limit = 500}) async {
     final snap = await _collection
         .where('uid', isEqualTo: uid)
         .orderBy('created_at', descending: true)
         .limit(limit)
         .get();
-    return snap.docs.map((d) => ConversationMessage.fromFirestore(d.id, d.data())).toList();
+    return snap.docs
+        .map((d) => ConversationMessage.fromFirestore(d.id, d.data()))
+        .toList();
   }
 
   /// Case-insensitive substring search over cached history. Firestore has
@@ -43,7 +48,9 @@ class ConversationRepository {
     if (query.trim().isEmpty) return [];
     final messages = await allMessages(uid);
     final needle = query.toLowerCase();
-    return messages.where((m) => m.text.toLowerCase().contains(needle)).toList();
+    return messages
+        .where((m) => m.text.toLowerCase().contains(needle))
+        .toList();
   }
 
   Future<void> save(ConversationMessage message) {
