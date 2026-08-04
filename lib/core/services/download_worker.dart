@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -73,8 +74,7 @@ class DownloadWorker {
 
     try {
       await Directory(File(task.localPath).parent.path).create(recursive: true);
-      final sink = partFile.openWrite(
-          mode: resumeFrom > 0 ? FileMode.append : FileMode.write);
+      final sink = partFile.openWrite(mode: resumeFrom > 0 ? FileMode.append : FileMode.write);
 
       final response = await _dio.get<ResponseBody>(
         task.sourceUrl,
@@ -150,8 +150,7 @@ class DownloadWorker {
     _progressControllers.remove(taskId)?.close();
   }
 
-  Future<int> storageStatsBytes() =>
-      DownloadRepository.instance.totalStorageBytes();
+  Future<int> storageStatsBytes() => DownloadRepository.instance.totalStorageBytes();
 
   Future<void> _finalize(DownloadTask task) async {
     final partFile = File('${task.localPath}.part');
@@ -174,9 +173,7 @@ class DownloadWorker {
     // Best-effort completion log (spec's `download_logs` collection) —
     // failure here must never fail the download itself.
     try {
-      await FirebaseFirestore.instance
-          .collection(AppConfig.downloadLogsCollection)
-          .add({
+      await FirebaseFirestore.instance.collection(AppConfig.downloadLogsCollection).add({
         'task_id': task.id,
         'title': task.title,
         'bytes': task.totalBytes,

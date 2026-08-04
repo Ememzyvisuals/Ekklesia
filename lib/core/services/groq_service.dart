@@ -48,8 +48,7 @@ class GroqService {
   GroqService._internal();
   static final GroqService instance = GroqService._internal();
 
-  static const _directChatUrl =
-      'https://api.groq.com/openai/v1/chat/completions';
+  static const _directChatUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
   Future<String> chat(List<GroqMessage> messages) async {
     final personalKey = await UserGroqKeyService.instance.getKey();
@@ -61,8 +60,7 @@ class GroqService {
 
   Future<String> _chatWithSharedProxy(List<GroqMessage> messages) async {
     if (await GroqUsageService.instance.hasReachedDailyLimit()) {
-      throw GroqUsageLimitException(
-          dailyLimit: GroqUsageService.dailyFreeLimit);
+      throw GroqUsageLimitException(dailyLimit: GroqUsageService.dailyFreeLimit);
     }
 
     final idToken = await AuthService.instance.getIdToken();
@@ -86,23 +84,20 @@ class GroqService {
       throw Exception('Session expired or invalid — please sign in again.');
     }
     if (response.statusCode != 200) {
-      throw Exception(
-          'Groq request failed (${response.statusCode}): ${response.body}');
+      throw Exception('Groq request failed (${response.statusCode}): ${response.body}');
     }
 
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     final reply = decoded['reply'];
     if (reply is! String) {
-      throw Exception(
-          'Groq proxy returned an unexpected shape: ${response.body}');
+      throw Exception('Groq proxy returned an unexpected shape: ${response.body}');
     }
 
     await GroqUsageService.instance.recordUsage();
     return reply;
   }
 
-  Future<String> _chatWithPersonalKey(
-      List<GroqMessage> messages, String apiKey) async {
+  Future<String> _chatWithPersonalKey(List<GroqMessage> messages, String apiKey) async {
     final response = await http.post(
       Uri.parse(_directChatUrl),
       headers: {
@@ -122,8 +117,7 @@ class GroqService {
       );
     }
     if (response.statusCode != 200) {
-      throw Exception(
-          'Groq request failed (${response.statusCode}): ${response.body}');
+      throw Exception('Groq request failed (${response.statusCode}): ${response.body}');
     }
 
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
@@ -131,11 +125,9 @@ class GroqService {
     if (choices == null || choices.isEmpty) {
       throw Exception('Groq returned an unexpected shape: ${response.body}');
     }
-    final content =
-        (choices.first as Map<String, dynamic>)['message']?['content'];
+    final content = (choices.first as Map<String, dynamic>)['message']?['content'];
     if (content is! String) {
-      throw Exception(
-          'Groq returned an unexpected message shape: ${response.body}');
+      throw Exception('Groq returned an unexpected message shape: ${response.body}');
     }
     return content;
   }
@@ -145,7 +137,8 @@ class GroqService {
     return chat([
       GroqMessage(
         role: 'system',
-        content: 'You summarize Christian sermon transcripts into 3-5 short, '
+        content:
+            'You summarize Christian sermon transcripts into 3-5 short, '
             'clear bullet points highlighting the key teaching points. '
             'Keep language simple and direct.',
       ),
@@ -159,7 +152,8 @@ class GroqService {
     return chat([
       GroqMessage(
         role: 'system',
-        content: 'You generate multiple-choice quiz questions from a sermon '
+        content:
+            'You generate multiple-choice quiz questions from a sermon '
             'transcript. Respond with ONLY valid JSON, no markdown fences, '
             'no preamble. Shape: '
             '{"questions": [{"question": "...", "options": ["...","...","...","..."], '
@@ -170,8 +164,7 @@ class GroqService {
   }
 
   List<Map<String, dynamic>> parseQuizJson(String rawJson) {
-    final cleaned =
-        rawJson.replaceAll('```json', '').replaceAll('```', '').trim();
+    final cleaned = rawJson.replaceAll('```json', '').replaceAll('```', '').trim();
     final decoded = jsonDecode(cleaned) as Map<String, dynamic>;
     return (decoded['questions'] as List<dynamic>).cast<Map<String, dynamic>>();
   }
