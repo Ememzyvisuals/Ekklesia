@@ -58,7 +58,10 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(l10n.settingsLanguageVoice),
-            subtitle: Text(_languages.firstWhere((l) => l.$1 == language, orElse: () => _languages.first).$2),
+            subtitle: Text(_languages
+                .firstWhere((l) => l.$1 == language,
+                    orElse: () => _languages.first)
+                .$2),
             onTap: () => _showLanguagePicker(context, ref, language),
           ),
 
@@ -72,10 +75,12 @@ class SettingsScreen extends ConsumerWidget {
             builder: (context, snapshot) {
               final key = snapshot.data;
               return ListTile(
-                leading: Icon(key != null ? Icons.key_rounded : Icons.key_off_outlined),
+                leading: Icon(
+                    key != null ? Icons.key_rounded : Icons.key_off_outlined),
                 title: Text(l10n.settingsGroqKeyTitle),
                 subtitle: key != null
-                    ? Text(l10n.settingsGroqKeyUnlimitedSuffix(UserGroqKeyService.mask(key)))
+                    ? Text(l10n.settingsGroqKeyUnlimitedSuffix(
+                        UserGroqKeyService.mask(key)))
                     : FutureBuilder<int>(
                         future: ref.watch(groqRemainingTodayProvider.future),
                         builder: (context, usageSnapshot) {
@@ -88,7 +93,8 @@ class SettingsScreen extends ConsumerWidget {
                         },
                       ),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showGroqKeyDialog(context, ref, l10n, currentKey: key),
+                onTap: () =>
+                    _showGroqKeyDialog(context, ref, l10n, currentKey: key),
               );
             },
           ),
@@ -156,7 +162,8 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: Text(l10n.commonSignOut, style: const TextStyle(color: Colors.red)),
+            title: Text(l10n.commonSignOut,
+                style: const TextStyle(color: Colors.red)),
             onTap: () async {
               await AuthService.instance.signOut();
               if (context.mounted) context.go('/login');
@@ -167,26 +174,33 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguagePicker(BuildContext context, WidgetRef ref, String current) {
+  void _showLanguagePicker(
+      BuildContext context, WidgetRef ref, String current) {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: _languages.map((l) => ListTile(
-            title: Text(l.$2),
-            trailing: current == l.$1 ? const Icon(Icons.check, color: AppColors.primary) : null,
-            onTap: () {
-              ref.read(languageProvider.notifier).setLanguage(l.$1);
-              Navigator.of(context).pop();
-            },
-          )).toList(),
+          children: _languages
+              .map((l) => ListTile(
+                    title: Text(l.$2),
+                    trailing: current == l.$1
+                        ? const Icon(Icons.check, color: AppColors.primary)
+                        : null,
+                    onTap: () {
+                      ref.read(languageProvider.notifier).setLanguage(l.$1);
+                      Navigator.of(context).pop();
+                    },
+                  ))
+              .toList(),
         ),
       ),
     );
   }
 
-  void _showGroqKeyDialog(BuildContext context, WidgetRef ref, AppLocalizations l10n, {String? currentKey}) {
+  void _showGroqKeyDialog(
+      BuildContext context, WidgetRef ref, AppLocalizations l10n,
+      {String? currentKey}) {
     final controller = TextEditingController();
     var obscure = true;
     showDialog<void>(
@@ -201,8 +215,10 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 Text(
                   currentKey != null
-                      ? l10n.settingsGroqKeyDialogCurrentSet(UserGroqKeyService.mask(currentKey))
-                      : l10n.settingsGroqKeyDialogPrompt(GroqUsageService.dailyFreeLimit),
+                      ? l10n.settingsGroqKeyDialogCurrentSet(
+                          UserGroqKeyService.mask(currentKey))
+                      : l10n.settingsGroqKeyDialogPrompt(
+                          GroqUsageService.dailyFreeLimit),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -213,17 +229,22 @@ class SettingsScreen extends ConsumerWidget {
                     border: const OutlineInputBorder(),
                     isDense: true,
                     suffixIcon: IconButton(
-                      icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      icon: Icon(obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
                       onPressed: () => setDialogState(() => obscure = !obscure),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 InkWell(
-                  onTap: () => launchUrl(Uri.parse('https://console.groq.com/keys')),
+                  onTap: () =>
+                      launchUrl(Uri.parse('https://console.groq.com/keys')),
                   child: const Text(
                     'console.groq.com/keys',
-                    style: TextStyle(color: AppColors.primary, decoration: TextDecoration.underline),
+                    style: TextStyle(
+                        color: AppColors.primary,
+                        decoration: TextDecoration.underline),
                   ),
                 ),
               ],
@@ -238,7 +259,9 @@ class SettingsScreen extends ConsumerWidget {
                   },
                   child: Text(l10n.settingsGroqKeyRemove),
                 ),
-              TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonCancel)),
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l10n.commonCancel)),
               FilledButton(
                 onPressed: () async {
                   final value = controller.text.trim();
