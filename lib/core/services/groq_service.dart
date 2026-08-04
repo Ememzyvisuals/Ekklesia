@@ -8,7 +8,7 @@ import 'groq_usage_service.dart';
 import 'user_groq_key_service.dart';
 
 class GroqMessage {
-  GroqMessage({required this.role, required this.content});
+  const GroqMessage({required this.role, required this.content});
   final String role; // 'system' | 'user' | 'assistant'
   final String content;
 
